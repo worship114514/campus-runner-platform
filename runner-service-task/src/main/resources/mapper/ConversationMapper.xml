@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.runner.task.mapper.ConversationMapper">
+
+    <resultMap id="BaseResultMap" type="com.runner.pojo.Conversation">
+        <id column="id" property="id"/>
+        <result column="task_id" property="taskId"/>
+        <result column="user_a_id" property="userAId"/>
+        <result column="user_a_name" property="userAName"/>
+        <result column="user_a_face" property="userAFace"/>
+        <result column="user_b_id" property="userBId"/>
+        <result column="user_b_name" property="userBName"/>
+        <result column="user_b_face" property="userBFace"/>
+        <result column="last_message" property="lastMessage"/>
+        <result column="last_time" property="lastTime"/>
+        <result column="user_a_unread" property="userAUnread"/>
+        <result column="user_b_unread" property="userBUnread"/>
+        <result column="user_a_deleted" property="userADeleted"/>
+        <result column="user_b_deleted" property="userBDeleted"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <select id="selectByTaskId" resultMap="BaseResultMap">
+        SELECT * FROM conversation WHERE task_id = #{taskId}
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM conversation
+        WHERE (user_a_id = #{userId} AND user_a_deleted = 0)
+           OR (user_b_id = #{userId} AND user_b_deleted = 0)
+        ORDER BY last_time DESC
+    </select>
+
+    <update id="updateLastMessage">
+        UPDATE conversation
+        SET last_message = #{lastMessage},
+            last_time = #{lastTime}
+        WHERE id = #{conversationId}
+    </update>
+
+    <!-- 修复：用 userAId 和 userBId 参数 -->
+    <update id="incrementUnread">
+        UPDATE conversation
+        SET
+        <choose>
+            <when test="userId == userAId">
+                user_a_unread = user_a_unread + 1
+            </when>
+            <otherwise>
+                user_b_unread = user_b_unread + 1
+            </otherwise>
+        </choose>
+        WHERE id = #{conversationId}
+    </update>
+
+    <!-- 修复：用 userAId 和 userBId 参数 -->
+    <update id="clearUnread">
+        UPDATE conversation
+        SET
+        <choose>
+            <when test="userId == userAId">
+                user_a_unread = 0
+            </when>
+            <otherwise>
+                user_b_unread = 0
+            </otherwise>
+        </choose>
+        WHERE id = #{conversationId}
+    </update>
+
+</mapper>

@@ -1,0 +1,28 @@
+server:
+  tomcat:
+    uri-encoding: UTF-8
+    max-swallow-size: -1
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  profiles:
+    active: dev
+  application:
+    name: service-files
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  servlet:
+    multipart:
+      max-file-size: 5120000
+      max-request-size: 5120000
+  data:
+    mongodb:
+      uri: mongodb://root:root@192.168.10.20:27017
+      database: runner-dev
+
+fdfs:
+  connect-timeout: 30
+  so-timeout: 30
+  tracker-list: 192.168.10.20:22122

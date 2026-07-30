@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.runner.task.mapper.MessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.runner.pojo.Message">
+        <id column="id" property="id"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="from_user_id" property="fromUserId"/>
+        <result column="from_user_name" property="fromUserName"/>
+        <result column="from_user_face" property="fromUserFace"/>
+        <result column="to_user_id" property="toUserId"/>
+        <result column="content" property="content"/>
+        <result column="status" property="status"/>
+        <result column="is_recalled" property="isRecalled"/>
+        <result column="recall_time" property="recallTime"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <select id="selectByConversationId" resultMap="BaseResultMap">
+        SELECT * FROM message
+        WHERE conversation_id = #{conversationId}
+        ORDER BY created_time ASC
+    </select>
+
+    <update id="markAsRead">
+        UPDATE message
+        SET status = 1
+        WHERE conversation_id = #{conversationId}
+          AND to_user_id = #{userId}
+          AND status = 0
+    </update>
+
+    <update id="recallMessage">
+        UPDATE message
+        SET is_recalled = 1,
+            recall_time = #{recallTime}
+        WHERE id = #{messageId}
+    </update>
+
+    <select id="selectUnreadByUserId" resultMap="BaseResultMap">
+        SELECT * FROM message
+        WHERE to_user_id = #{userId}
+          AND status = 0
+          AND is_recalled = 0
+        ORDER BY created_time DESC
+    </select>
+
+</mapper>
