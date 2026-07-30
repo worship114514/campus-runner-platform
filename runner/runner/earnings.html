@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收入明细 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .earnings-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .summary-card {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+        .summary-card .amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: var(--space-2) 0;
+        }
+        .summary-card .label {
+            font-size: var(--font-size-sm);
+            opacity: 0.9;
+        }
+        .summary-card .sub {
+            font-size: var(--font-size-sm);
+            opacity: 0.8;
+            margin-top: var(--space-2);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .stats-grid .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            text-align: center;
+        }
+        .stats-grid .stat-card .number {
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--primary-500);
+        }
+        .stats-grid .stat-card .label {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .income-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .income-item:last-child {
+            border-bottom: none;
+        }
+        .income-item .left .desc {
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+        }
+        .income-item .left .time {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .income-item .amount {
+            font-weight: 600;
+            color: var(--success-500);
+        }
+        .empty-state {
+            text-align: center;
+            padding: var(--space-8);
+            color: var(--text-muted);
+        }
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-4);
+        }
+        .empty-state .title {
+            font-size: var(--font-size-lg);
+            font-weight: 500;
+            margin-bottom: var(--space-2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="earnings-page">
+        <div class="summary-card">
+            <div class="label">💰 累计收入</div>
+            <div class="amount" id="totalEarnings">¥0.00</div>
+            <div class="sub" id="completedCount">已完成 0 单</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="number" id="todayEarnings">¥0.00</div>
+                <div class="label">今日收入</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="weekEarnings">¥0.00</div>
+                <div class="label">本周收入</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="monthEarnings">¥0.00</div>
+                <div class="label">本月收入</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">📋 收入明细</div>
+            <div class="card-body" id="incomeList">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <div class="title">暂无收入记录</div>
+                    <div style="font-size:var(--font-size-sm);">完成跑腿任务后，收入将在此显示</div>
+                </div>
+            </div>
+            <div class="card-footer" style="text-align:center; padding:var(--space-3);">
+                <button class="btn btn-secondary btn-sm" id="loadMoreBtn" style="display:none;">加载更多</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var page = 1;
+        var pageSize = 20;
+        var totalPages = 1;
+
+        function loadEarnings() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = '../portal/login.html'; }, 1500);
+                return;
+            }
+
+            // 检查是否为跑腿员
+            if (app.currentRole !== 2) {
+                app.showToast('只有跑腿员才能查看收入明细');
+                setTimeout(function() { window.location.href = '../portal/index.html'; }, 1500);
+                return;
+            }
+
+            loadStats();
+            loadIncomeList(1);
+        }
+
+        function loadStats() {
+            axios.get(app.walletServerUrl + '/wallet/runnerStats', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data || {};
+                    document.getElementById('totalEarnings').textContent = '¥' + (data.totalEarnings || 0).toFixed(2);
+                    document.getElementById('completedCount').textContent = '已完成 ' + (data.completedCount || 0) + ' 单';
+                    document.getElementById('todayEarnings').textContent = '¥' + (data.todayEarnings || 0).toFixed(2);
+                    document.getElementById('weekEarnings').textContent = '¥' + (data.weekEarnings || 0).toFixed(2);
+                    document.getElementById('monthEarnings').textContent = '¥' + (data.monthEarnings || 0).toFixed(2);
+                }
+            }).catch(function(err) {
+                console.error('加载统计数据失败:', err);
+            });
+        }
+
+        function loadIncomeList(pageNum) {
+            pageNum = pageNum || 1;
+            page = pageNum;
+
+            axios.get(app.walletServerUrl + '/wallet/transactions', {
+                params: { userId: user.userId, page: pageNum, pageSize: pageSize }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    var list = data.list || [];
+                    totalPages = Math.ceil((data.total || 0) / pageSize);
+                    renderIncomeList(list, pageNum === 1);
+                    if (pageNum < totalPages) {
+                        document.getElementById('loadMoreBtn').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('loadMoreBtn').style.display = 'none';
+                    }
+                }
+            }).catch(function(err) {
+                console.error('加载收入列表失败:', err);
+            });
+        }
+
+        function renderIncomeList(list, isNew) {
+            var container = document.getElementById('incomeList');
+
+            if (!list || list.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <div class="title">暂无收入记录</div>
+                        <div style="font-size:var(--font-size-sm);">完成跑腿任务后，收入将在此显示</div>
+                    </div>
+                `;
+                return;
+            }
+
+            var typeMap = { 1: '充值', 2: '提现', 3: '任务收入', 4: '支出', 5: '退款' };
+            var html = '';
+            list.forEach(function(tx) {
+                if (tx.type === 3) {
+                    html += `
+                        <div class="income-item">
+                            <div class="left">
+                                <span class="desc">${tx.description || '任务收入'}</span>
+                                <span class="time">${app.formatDateTime(new Date(tx.createdTime).getTime())}</span>
+                            </div>
+                            <div class="amount">+¥${parseFloat(tx.amount).toFixed(2)}</div>
+                        </div>
+                    `;
+                } else if (tx.type === 2) {
+                    html += `
+                        <div class="income-item">
+                            <div class="left">
+                                <span class="desc">提现</span>
+                                <span class="time">${app.formatDateTime(new Date(tx.createdTime).getTime())}</span>
+                                <span style="font-size:var(--font-size-xs);color:var(--text-muted);">${tx.status === 1 ? '✅ 已到账' : tx.status === 0 ? '⏳ 处理中' : '❌ 失败'}</span>
+                            </div>
+                            <div class="amount" style="color:var(--error-500);">-¥${parseFloat(tx.amount).toFixed(2)}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (!html) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <div class="title">暂无收入记录</div>
+                        <div style="font-size:var(--font-size-sm);">完成跑腿任务后，收入将在此显示</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = html;
+        }
+
+        document.getElementById('loadMoreBtn').addEventListener('click', function() {
+            loadIncomeList(page + 1);
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            user = app.getCurrentUser();
+            if (user) {
+                app.loadUserInfo().then(function() {
+                    loadEarnings();
+                });
+            } else {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = '../portal/login.html'; }, 1500);
+            }
+        });
+    </script>
+
+</body>
+</html>

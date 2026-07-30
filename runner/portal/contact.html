@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>联系我们 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .contact-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .contact-page .card {
+            margin-bottom: var(--space-4);
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+        }
+        .contact-item {
+            text-align: center;
+            padding: var(--space-4);
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+        }
+        .contact-item .icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: var(--space-2);
+        }
+        .contact-item h4 {
+            margin-bottom: var(--space-1);
+        }
+        .contact-item p {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        .address-box {
+            padding: var(--space-4);
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            line-height: 1.8;
+            font-size: var(--font-size-sm);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="contact-page">
+        <div class="card">
+            <div class="card-header">📞 联系方式</div>
+            <div class="card-body">
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <span class="icon">📧</span>
+                        <h4>客服邮箱</h4>
+                        <p>support@runner.com</p>
+                    </div>
+                    <div class="contact-item">
+                        <span class="icon">📱</span>
+                        <h4>客服电话</h4>
+                        <p>400-888-XXXX</p>
+                        <p style="font-size:var(--font-size-sm); color:var(--text-muted);">周一至周日 9:00-21:00</p>
+                    </div>
+                    <div class="contact-item">
+                        <span class="icon">💬</span>
+                        <h4>微信公众号</h4>
+                        <p>校园闪电侠</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">✉️ 在线留言</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">姓名</label>
+                    <input type="text" id="contactName" class="form-input" placeholder="请输入您的姓名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">邮箱</label>
+                    <input type="email" id="contactEmail" class="form-input" placeholder="请输入您的邮箱">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">留言内容</label>
+                    <textarea id="contactMessage" class="form-textarea" rows="4" placeholder="请详细描述您的问题或建议..."></textarea>
+                </div>
+                <button class="btn btn-primary btn-block" id="submitBtn">提交留言</button>
+                <p style="font-size:var(--font-size-sm); color:var(--text-muted); margin-top:var(--space-4); text-align:center;">
+                    我们会尽快回复您的留言，感谢您的支持！
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">📍 办公地址</div>
+            <div class="card-body">
+                <div class="address-box">
+                    <p>📍 贵州省贵阳市花溪区大学城</p>
+                    <p style="margin-top: var(--space-2);">📧 商务合作：business@runner.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            var name = document.getElementById('contactName').value.trim();
+            var email = document.getElementById('contactEmail').value.trim();
+            var message = document.getElementById('contactMessage').value.trim();
+
+            if (!name) { app.showToast('请输入姓名'); return; }
+            if (!email) { app.showToast('请输入邮箱'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { app.showToast('请输入正确的邮箱地址'); return; }
+            if (!message) { app.showToast('请输入留言内容'); return; }
+
+            app.showToast('留言已提交，我们会尽快回复您！');
+            document.getElementById('contactName').value = '';
+            document.getElementById('contactEmail').value = '';
+            document.getElementById('contactMessage').value = '';
+        });
+    </script>
+
+</body>
+</html>

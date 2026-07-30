@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跑腿员中心 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .runner-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .stats-grid .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-4);
+            text-align: center;
+        }
+        .stats-grid .stat-card .number {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--primary-500);
+        }
+        .stats-grid .stat-card .label {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            margin-top: var(--space-1);
+        }
+        .accept-toggle {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+        }
+        .accept-toggle input[type="checkbox"] {
+            width: 48px;
+            height: 24px;
+            appearance: none;
+            background: var(--neutral-300);
+            border-radius: 24px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+        .accept-toggle input[type="checkbox"]:checked {
+            background: var(--primary-500);
+        }
+        .accept-toggle input[type="checkbox"]::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        .accept-toggle input[type="checkbox"]:checked::before {
+            transform: translateX(24px);
+        }
+        .accept-toggle .status-text {
+            font-weight: 500;
+            font-size: var(--font-size-sm);
+        }
+        .accept-toggle .status-text.on {
+            color: var(--success-500);
+        }
+        .accept-toggle .status-text.off {
+            color: var(--error-500);
+        }
+        .task-tabs {
+            display: flex;
+            gap: var(--space-1);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--space-4);
+        }
+        .task-tabs .tab {
+            padding: var(--space-2) var(--space-4);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .task-tabs .tab.active {
+            color: var(--primary-500);
+            border-bottom-color: var(--primary-500);
+        }
+        .task-tabs .tab:hover {
+            color: var(--text-primary);
+        }
+        .task-item {
+            padding: var(--space-4);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-3);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-secondary);
+        }
+        .task-item:hover {
+            border-color: var(--primary-500);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .task-item .header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+        }
+        .task-item .header .reward {
+            color: var(--primary-500);
+        }
+        .task-item .desc {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+        .task-item .meta {
+            display: flex;
+            gap: var(--space-4);
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .task-item .actions {
+            margin-top: var(--space-3);
+            display: flex;
+            gap: var(--space-2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="runner-page" id="app">
+        <!-- 统计 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="number" id="totalEarnings">¥0.00</div>
+                <div class="label">累计收入</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="completedCount">0</div>
+                <div class="label">完成订单</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="pendingCount">0</div>
+                <div class="label">待接单</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="acceptedCount">0</div>
+                <div class="label">进行中</div>
+            </div>
+        </div>
+
+        <!-- 接单开关 -->
+        <div class="accept-toggle">
+            <input type="checkbox" id="acceptSwitch" checked>
+            <span class="status-text on" id="acceptStatus">接单中</span>
+            <span style="font-size:var(--font-size-sm); color:var(--text-muted); margin-left:auto;">
+                关闭后将不会收到新订单
+            </span>
+        </div>
+
+        <!-- 我的任务 -->
+        <div class="card">
+            <div class="card-header">📋 我的任务</div>
+            <div class="card-body">
+                <div class="task-tabs">
+                    <div class="tab active" data-tab="accepted">进行中</div>
+                    <div class="tab" data-tab="pending">待接单</div>
+                    <div class="tab" data-tab="completed">已完成</div>
+                </div>
+                <div id="taskList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-title">暂无任务</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var currentTab = 'accepted';
+
+        // ===== 加载统计数据 =====
+        function loadStats() {
+            if (!user) return;
+
+            // 加载收入统计（从钱包服务获取）
+            axios.get(app.walletServerUrl + '/wallet/runnerStats', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data || {};
+                    document.getElementById('totalEarnings').textContent = '¥' + (data.totalEarnings || 0).toFixed(2);
+                    document.getElementById('completedCount').textContent = data.completedCount || 0;
+                }
+            }).catch(function(err) {
+                console.error('加载统计数据失败:', err);
+            });
+
+            // 加载任务计数（从任务接口获取）
+            // 跑腿员相关的任务计数：待接单是所有待接单任务，进行中是自己接的任务
+            axios.get(app.taskServerUrl + '/task/myAccepted', {
+                params: { runnerId: user.userId, page: 1, pageSize: 100 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data.list || [];
+                    var accepted = list.filter(function(t) { return t.status === 2 || t.status === 3; });
+                    var completed = list.filter(function(t) { return t.status === 4; });
+                    document.getElementById('acceptedCount').textContent = accepted.length;
+                    document.getElementById('completedCount').textContent = completed.length;
+                }
+            }).catch(function(err) {
+                console.error('加载任务计数失败:', err);
+            });
+
+            // 待接单数量（所有待接单任务）
+            axios.get(app.taskServerUrl + '/task/list', {
+                params: { page: 1, pageSize: 1, status: 1 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var total = res.data.data.total || 0;
+                    document.getElementById('pendingCount').textContent = total;
+                }
+            }).catch(function(err) {
+                console.error('加载待接单数量失败:', err);
+            });
+        }
+
+        // ===== 加载任务列表 =====
+        function loadTasks(tab) {
+            tab = tab || currentTab;
+            if (!user) return;
+
+            var statusMap = {
+                'pending': 1,
+                'accepted': 2,
+                'delivered': 3,
+                'completed': 4
+            };
+
+            // 对于跑腿员，"待接单"是指所有待接单任务，其他tab是已接的
+            var url = app.taskServerUrl + '/task/list';
+            var params = {
+                page: 1,
+                pageSize: 50,
+                status: tab === 'pending' ? 1 : null,
+                runnerId: tab !== 'pending' ? user.userId : null
+            };
+
+            if (tab === 'accepted') {
+                // 进行中：接单但未完成
+                url = app.taskServerUrl + '/task/myAccepted';
+                params = { runnerId: user.userId, page: 1, pageSize: 50 };
+            } else if (tab === 'completed') {
+                url = app.taskServerUrl + '/task/myAccepted';
+                params = { runnerId: user.userId, page: 1, pageSize: 50 };
+            }
+
+            axios.get(url, { params: params }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data.list || [];
+                    // 如果是completed，过滤已完成
+                    if (tab === 'completed') {
+                        list = list.filter(function(t) { return t.status === 4; });
+                    } else if (tab === 'accepted') {
+                        list = list.filter(function(t) { return t.status === 2 || t.status === 3; });
+                    } else if (tab === 'pending') {
+                        list = list.filter(function(t) { return t.status === 1 && !t.runnerId; });
+                    }
+                    renderTasks(list, tab);
+                }
+            }).catch(function(err) {
+                console.error('加载任务失败', err);
+            });
+        }
+
+        function renderTasks(list, tab) {
+            if (!list || list.length === 0) {
+                document.getElementById('taskList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-title">
+                            ${tab === 'pending' ? '暂无待接单任务' : tab === 'accepted' ? '暂无进行中的任务' : '暂无已完成的任务'}
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            var html = '';
+            var statusMap = { 1: '待接单', 2: '进行中', 3: '待确认', 4: '已完成', 5: '已取消' };
+            var statusClassMap = { 1: 'status-pending', 2: 'status-accepted', 3: 'status-delivered', 4: 'status-completed', 5: 'status-cancelled' };
+
+            list.forEach(function(task) {
+                var statusText = statusMap[task.status] || '未知';
+                var statusClass = statusClassMap[task.status] || '';
+                var isPending = task.status === 1;
+
+                html += `
+                    <div class="task-item" onclick="window.location.href='../portal/task-detail.html?id=${task.id}'">
+                        <div class="header">
+                            <span>${task.title}</span>
+                            <span class="reward">¥${parseFloat(task.rewardAmount).toFixed(2)}</span>
+                        </div>
+                        <div class="desc">${task.description || ''}</div>
+                        <div class="meta">
+                            <span>👤 ${task.publisherName || '用户'}</span>
+                            <span>📍 ${task.pickupLocation || '未设置'}</span>
+                            <span class="badge ${statusClass}">${statusText}</span>
+                            <span>${app.getDateBeforeNow(new Date(task.createdTime).getTime())}</span>
+                        </div>
+                        <div class="actions">
+                            ${isPending ? `<button class="btn btn-primary btn-sm accept-btn" data-id="${task.id}" onclick="event.stopPropagation();">接单</button>` : ''}
+                            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();window.location.href='../portal/task-detail.html?id=${task.id}'">查看详情</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('taskList').innerHTML = html;
+
+            // 绑定接单事件
+            document.querySelectorAll('.accept-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    acceptTask(this.dataset.id);
+                });
+            });
+        }
+
+        // ===== 接单 =====
+        function acceptTask(taskId) {
+            if (!user) return;
+            var runnerName = app.getCookie('userName') || '跑腿员';
+
+            axios.post(app.taskServerUrl + '/task/accept', null, {
+                params: {
+                    taskId: taskId,
+                    runnerId: user.userId,
+                    runnerName: runnerName,
+                    runnerAvatar: ''
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('接单成功！');
+                    loadTasks(currentTab);
+                    loadStats();
+                } else {
+                    app.showToast(res.data.msg || '接单失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '接单失败');
+            });
+        }
+
+        // ===== 接单开关 =====
+        document.getElementById('acceptSwitch').addEventListener('change', function() {
+            var status = this.checked ? 'on' : 'off';
+            var el = document.getElementById('acceptStatus');
+            el.textContent = this.checked ? '接单中' : '已关闭';
+            el.className = 'status-text ' + (this.checked ? 'on' : 'off');
+
+            // 保存到Redis
+            axios.post(app.taskServerUrl + '/task/setAcceptStatus', null, {
+                params: {
+                    runnerId: user.userId,
+                    accepting: this.checked ? 1 : 0
+                }
+            }).catch(function(err) {
+                console.error('保存接单状态失败', err);
+            });
+        });
+
+        // ===== Tab切换 =====
+        document.querySelectorAll('.task-tabs .tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.task-tabs .tab').forEach(function(t) {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                currentTab = this.dataset.tab;
+                loadTasks(currentTab);
+            });
+        });
+
+        // ===== 初始化 =====
+        if (!user) {
+            app.showToast('请先登录');
+            setTimeout(function() { window.location.href = '../portal/login.html'; }, 1500);
+        } else {
+            loadStats();
+            loadTasks('accepted');
+
+            // 加载接单状态
+            axios.get(app.taskServerUrl + '/task/getAcceptStatus', {
+                params: { runnerId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var status = res.data.data || 1;
+                    document.getElementById('acceptSwitch').checked = status === 1;
+                    var el = document.getElementById('acceptStatus');
+                    el.textContent = status === 1 ? '接单中' : '已关闭';
+                    el.className = 'status-text ' + (status === 1 ? 'on' : 'off');
+                }
+            }).catch(function(err) {
+                console.error('加载接单状态失败', err);
+            });
+        }
+    </script>
+
+</body>
+</html>

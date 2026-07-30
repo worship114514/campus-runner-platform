@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .chat-page {
+            max-width: 800px;
+            margin: 0 auto;
+            height: calc(100vh - 140px);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-4);
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            flex-shrink: 0;
+        }
+        .chat-header .back-btn {
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: var(--space-1);
+            transition: background 0.2s;
+            border-radius: var(--radius-full);
+        }
+        .chat-header .back-btn:hover {
+            background: var(--bg-hover);
+        }
+        .chat-header .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: var(--font-size-base);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .chat-header .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .chat-header .name {
+            font-weight: 600;
+            flex: 1;
+        }
+        .chat-header .task-link {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .chat-header .task-link:hover {
+            color: var(--primary-500);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-4);
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        .chat-messages .empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: var(--space-8);
+            font-size: var(--font-size-sm);
+        }
+
+        .message-item {
+            max-width: 75%;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+            word-break: break-word;
+            position: relative;
+        }
+        .message-item.sent {
+            align-self: flex-end;
+            background: var(--primary-500);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message-item.received {
+            align-self: flex-start;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
+        .message-item .time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: var(--space-1);
+            text-align: right;
+        }
+        .message-item .recalled-text {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .message-item .recall-btn {
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            margin-left: var(--space-2);
+        }
+        .message-item .recall-btn:hover {
+            color: white;
+        }
+        .message-item.received .recall-btn {
+            color: var(--text-muted);
+        }
+        .message-item.received .recall-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+            flex-shrink: 0;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .chat-input-area input:focus {
+            border-color: var(--primary-500);
+        }
+        .chat-input-area input:disabled {
+            opacity: 0.5;
+        }
+        .chat-input-area .send-btn {
+            padding: var(--space-2) var(--space-5);
+            border-radius: var(--radius-full);
+            background: var(--primary-500);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: var(--font-size-sm);
+            transition: background 0.2s;
+        }
+        .chat-input-area .send-btn:hover {
+            background: var(--primary-600);
+        }
+        .chat-input-area .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="chat-page">
+        <!-- 聊天头部 -->
+        <div class="chat-header" id="chatHeader">
+            <span class="back-btn" onclick="history.back()">←</span>
+            <div class="avatar" id="otherAvatar">?</div>
+            <span class="name" id="otherName">加载中...</span>
+            <span class="task-link" id="taskLink">查看任务</span>
+        </div>
+
+        <!-- 消息列表 -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="empty">加载中...</div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="chat-input-area">
+            <input type="text" id="messageInput" placeholder="输入消息..." maxlength="500">
+            <button class="send-btn" id="sendBtn">发送</button>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var conversationId = app.getUrlParam('conversationId');
+        var conversation = null;
+        var otherUser = null;
+        var taskId = null;
+        var messageInterval = null;
+
+        // ===== 工具：解码用户名 =====
+        function decodeName(name) {
+            if (!name) return '';
+            try {
+                return decodeURIComponent(name);
+            } catch (e) {
+                return name;
+            }
+        }
+
+        // ===== 初始化 =====
+        function initChat() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+                return;
+            }
+
+            if (!conversationId) {
+                document.getElementById('chatMessages').innerHTML = '<div class="empty">会话不存在</div>';
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
+                return;
+            }
+
+            loadConversation();
+            loadMessages();
+            // 每5秒刷新消息
+            messageInterval = setInterval(loadMessages, 5000);
+        }
+
+        // ===== 加载会话信息 =====
+        function loadConversation() {
+            axios.get(app.taskServerUrl + '/message/conversation', {
+                params: { conversationId: conversationId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    conversation = res.data.data;
+                    if (!conversation) {
+                        app.showToast('会话不存在');
+                        return;
+                    }
+
+                    // 确定对方信息
+                    var isA = conversation.userAId === user.userId;
+                    otherUser = {
+                        id: isA ? conversation.userBId : conversation.userAId,
+                        name: isA ? conversation.userBName : conversation.userAName,
+                        face: isA ? conversation.userBFace : conversation.userAFace
+                    };
+                    taskId = conversation.taskId;
+
+                    // 更新头部（解码用户名）
+                    var displayName = decodeName(otherUser.name);
+                    var avatarEl = document.getElementById('otherAvatar');
+                    if (otherUser.face && otherUser.face !== 'null' && otherUser.face !== '') {
+                        avatarEl.innerHTML = '<img src="' + otherUser.face + '" alt="头像">';
+                    } else {
+                        avatarEl.textContent = displayName ? displayName.charAt(0).toUpperCase() : '?';
+                        avatarEl.style.background = 'var(--primary-500)';
+                    }
+                    document.getElementById('otherName').textContent = displayName || '用户';
+
+                    var taskLink = document.getElementById('taskLink');
+                    if (taskId) {
+                        taskLink.style.display = 'inline';
+                        taskLink.textContent = '📋 查看任务';
+                        taskLink.onclick = function() {
+                            window.location.href = 'task-detail.html?id=' + taskId;
+                        };
+                    } else {
+                        taskLink.style.display = 'none';
+                    }
+                }
+            }).catch(function(err) {
+                console.error('加载会话失败:', err);
+            });
+        }
+
+        // ===== 加载消息 =====
+        function loadMessages() {
+            if (!conversationId) return;
+
+            axios.get(app.taskServerUrl + '/message/messages', {
+                params: {
+                    conversationId: conversationId,
+                    userId: user.userId
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var messages = res.data.data || [];
+                    renderMessages(messages);
+                }
+            }).catch(function(err) {
+                console.error('加载消息失败:', err);
+            });
+        }
+
+        function renderMessages(messages) {
+            var container = document.getElementById('chatMessages');
+
+            if (!messages || messages.length === 0) {
+                container.innerHTML = '<div class="empty">暂无消息，开始聊天吧 💬</div>';
+                return;
+            }
+
+            var html = '';
+            messages.forEach(function(msg) {
+                var isSent = msg.fromUserId === user.userId;
+                var className = isSent ? 'sent' : 'received';
+
+                // 检查是否被撤回
+                if (msg.isRecalled === 1) {
+                    var recallText = isSent ? '你撤回了一条消息' : decodeName(msg.fromUserName || '对方') + '撤回了一条消息';
+                    html += `
+                        <div class="message-item ${className}">
+                            <div class="recalled-text">${recallText}</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                var timeStr = app.formatDateTime(new Date(msg.createdTime).getTime());
+                // 5分钟内可撤回
+                var canRecall = isSent && (Date.now() - new Date(msg.createdTime).getTime() < 5 * 60 * 1000);
+
+                html += `
+                    <div class="message-item ${className}" data-id="${msg.id}">
+                        ${msg.content}
+                        <div class="time">
+                            ${timeStr}
+                            ${canRecall ? `<span class="recall-btn" onclick="recallMessage('${msg.id}')">撤回</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            // 滚动到底部
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ===== 发送消息 =====
+        function sendMessage() {
+            var input = document.getElementById('messageInput');
+            var content = input.value.trim();
+
+            if (!content) {
+                app.showToast('请输入消息内容');
+                return;
+            }
+            if (content.length > 500) {
+                app.showToast('消息不能超过500字');
+                return;
+            }
+            if (!conversationId || !otherUser) {
+                app.showToast('会话异常，请刷新重试');
+                return;
+            }
+
+            var sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.textContent = '发送中...';
+
+            axios.post(app.taskServerUrl + '/message/send', null, {
+                params: {
+                    conversationId: conversationId,
+                    fromUserId: user.userId,
+                    fromUserName: app.getCookie('userName') || '用户',
+                    fromUserFace: app.getCookie('userAvatar') || '',
+                    toUserId: otherUser.id,
+                    content: content
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    input.value = '';
+                    loadMessages();
+                } else {
+                    app.showToast(res.data.msg || '发送失败');
+                }
+            }).catch(function(err) {
+                app.showToast('发送失败，请重试');
+            }).finally(function() {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '发送';
+            });
+        }
+
+        // ===== 撤回消息 =====
+        function recallMessage(messageId) {
+            if (!confirm('确定撤回该消息吗？（仅5分钟内可撤回）')) return;
+
+            axios.post(app.taskServerUrl + '/message/recall', null, {
+                params: {
+                    messageId: messageId,
+                    userId: user.userId
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('撤回成功');
+                    loadMessages();
+                } else {
+                    app.showToast(res.data.msg || '撤回失败');
+                }
+            }).catch(function(err) {
+                app.showToast('撤回失败，请重试');
+            });
+        }
+
+        // ===== 事件绑定 =====
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // ===== 页面离开时清除轮询 =====
+        window.addEventListener('beforeunload', function() {
+            if (messageInterval) {
+                clearInterval(messageInterval);
+            }
+        });
+
+        // ===== 初始化 =====
+        document.addEventListener('DOMContentLoaded', initChat);
+    </script>
+
+</body>
+</html>

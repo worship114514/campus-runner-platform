@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的钱包 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .wallet-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .balance-card {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+        .balance-card .amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: var(--space-2) 0;
+        }
+        .balance-card .label {
+            font-size: var(--font-size-sm);
+            opacity: 0.9;
+        }
+        .balance-card .sub {
+            font-size: var(--font-size-sm);
+            opacity: 0.8;
+            margin-top: var(--space-2);
+        }
+        .recharge-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: var(--space-2);
+            margin: var(--space-4) 0;
+        }
+        .recharge-options .option {
+            padding: var(--space-3);
+            text-align: center;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: var(--font-size-sm);
+            transition: all 0.2s;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .recharge-options .option:hover {
+            border-color: var(--primary-500);
+        }
+        .recharge-options .option.selected {
+            border-color: var(--primary-500);
+            background: #fff5f0;
+            color: var(--primary-500);
+        }
+        .recharge-options .option.custom {
+            border-style: dashed;
+        }
+        .withdraw-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-4);
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            margin-top: var(--space-4);
+        }
+        .withdraw-entry .left .title {
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+        }
+        .withdraw-entry .left .desc {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+        .transaction-item .left {
+            display: flex;
+            flex-direction: column;
+        }
+        .transaction-item .left .desc {
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+        }
+        .transaction-item .left .time {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .transaction-item .left .status-badge {
+            font-size: var(--font-size-xs);
+            padding: 1px 8px;
+            border-radius: var(--radius-full);
+            display: inline-block;
+            margin-top: 2px;
+            width: fit-content;
+        }
+        .transaction-item .left .status-badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .transaction-item .left .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .transaction-item .left .status-badge.fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .transaction-item .amount.income {
+            color: var(--success-500);
+        }
+        .transaction-item .amount.expense {
+            color: var(--error-500);
+        }
+        .custom-amount-input {
+            display: none;
+            margin-top: var(--space-3);
+        }
+        .custom-amount-input input {
+            width: 100%;
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        @media (max-width: 480px) {
+            .recharge-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="wallet-page" id="app">
+        <!-- 余额 -->
+        <div class="balance-card">
+            <div class="label">💰 账户余额</div>
+            <div class="amount" id="balanceAmount">¥0.00</div>
+            <div class="sub" id="balanceSub"></div>
+        </div>
+
+        <!-- 充值 -->
+        <div class="card">
+            <div class="card-header">💳 充值</div>
+            <div class="card-body">
+                <div class="recharge-options" id="rechargeOptions">
+                    <div class="option" data-amount="10">¥10</div>
+                    <div class="option" data-amount="20">¥20</div>
+                    <div class="option" data-amount="50">¥50</div>
+                    <div class="option" data-amount="100">¥100</div>
+                    <div class="option" data-amount="200">¥200</div>
+                    <div class="option custom" data-amount="custom">自定义</div>
+                </div>
+                <div class="custom-amount-input" id="customAmountInput">
+                    <input type="number" id="customAmount" class="form-input" placeholder="输入金额" min="1" step="1">
+                </div>
+                <button class="btn btn-primary btn-block" id="rechargeBtn" style="margin-top:var(--space-4);">
+                    立即充值
+                </button>
+                <div style="font-size:var(--font-size-sm); color:var(--text-muted); text-align:center; margin-top:var(--space-2);">
+                    🔒 支付安全由支付宝提供保障
+                </div>
+            </div>
+        </div>
+
+        <!-- 提现入口 -->
+        <div class="card" id="withdrawCard" style="display:none;">
+            <div class="card-header">🏦 提现</div>
+            <div class="card-body">
+                <div class="withdraw-entry">
+                    <div class="left">
+                        <div class="title">将余额提取到支付宝</div>
+                        <div class="desc">单次最低 1 元，1-3 个工作日到账</div>
+                    </div>
+                    <a href="withdraw.html">
+                        <button class="btn btn-primary">申请提现</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 交易记录 -->
+        <div class="card">
+            <div class="card-header">📋 交易记录</div>
+            <div class="card-body" id="transactionList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-title">暂无交易记录</div>
+                </div>
+            </div>
+            <div class="card-footer" style="text-align:center; padding:var(--space-3);">
+                <button class="btn btn-secondary btn-sm" id="loadMoreTransBtn" style="display:none;">加载更多</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var selectedAmount = null;
+        var transPage = 1;
+        var transTotal = 0;
+        var pollingTimer = null;
+
+        // ===== 加载余额 =====
+        function loadBalance() {
+            if (!user) {
+                document.getElementById('balanceAmount').textContent = '请先登录';
+                return;
+            }
+            axios.get(app.walletServerUrl + '/wallet/balance', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var balance = res.data.data.balance || 0;
+                    document.getElementById('balanceAmount').textContent = '¥' + parseFloat(balance).toFixed(2);
+                }
+            }).catch(function(err) {
+                console.error('加载余额失败:', err);
+            });
+        }
+
+        // ===== 加载交易记录 =====
+        function loadTransactions(page) {
+            page = page || 1;
+            if (!user) return;
+
+            axios.get(app.walletServerUrl + '/wallet/transactions', {
+                params: { userId: user.userId, page: page, pageSize: 10 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    var list = data.list || [];
+                    transTotal = data.total || 0;
+                    renderTransactions(list, page === 1);
+                    if (page * 10 < transTotal) {
+                        document.getElementById('loadMoreTransBtn').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('loadMoreTransBtn').style.display = 'none';
+                    }
+                }
+            }).catch(function(err) {
+                console.error('加载交易记录失败:', err);
+            });
+        }
+
+        function renderTransactions(list, isNew) {
+            if (!list || list.length === 0) {
+                document.getElementById('transactionList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-title">暂无交易记录</div>
+                    </div>
+                `;
+                return;
+            }
+
+            var typeMap = { 1: '充值', 2: '提现', 3: '收入', 4: '支出', 5: '退款' };
+            var statusMap = { 0: '处理中', 1: '成功', 2: '失败' };
+            var statusClassMap = { 0: 'pending', 1: 'success', 2: 'fail' };
+
+            var html = '';
+            list.forEach(function(tx) {
+                var isIncome = tx.type === 1 || tx.type === 3 || tx.type === 5;
+                var sign = isIncome ? '+' : '-';
+                var cls = isIncome ? 'income' : 'expense';
+                var status = statusMap[tx.status] || '未知';
+                var statusClass = statusClassMap[tx.status] || '';
+
+                html += `
+                    <div class="transaction-item">
+                        <div class="left">
+                            <span class="desc">${typeMap[tx.type] || tx.description || '交易'}</span>
+                            <span class="time">${app.formatDateTime(new Date(tx.createdTime).getTime())}</span>
+                            <span class="status-badge ${statusClass}">${status}</span>
+                        </div>
+                        <div class="amount ${cls}">${sign}¥${parseFloat(tx.amount).toFixed(2)}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('transactionList').innerHTML = html;
+        }
+
+        // ===== 充值选项 =====
+        document.querySelectorAll('#rechargeOptions .option').forEach(function(opt) {
+            opt.addEventListener('click', function() {
+                document.querySelectorAll('#rechargeOptions .option').forEach(function(o) {
+                    o.classList.remove('selected');
+                });
+                this.classList.add('selected');
+                var amount = this.dataset.amount;
+                if (amount === 'custom') {
+                    document.getElementById('customAmountInput').style.display = 'block';
+                    selectedAmount = null;
+                } else {
+                    document.getElementById('customAmountInput').style.display = 'none';
+                    selectedAmount = parseFloat(amount);
+                }
+            });
+        });
+
+        // ===== 充值提交 =====
+        document.getElementById('rechargeBtn').addEventListener('click', function() {
+            if (!user) {
+                app.showToast('请先登录');
+                return;
+            }
+
+            var amount = selectedAmount;
+            if (document.getElementById('customAmountInput').style.display !== 'none') {
+                var customVal = parseFloat(document.getElementById('customAmount').value);
+                if (isNaN(customVal) || customVal <= 0) {
+                    app.showToast('请输入有效的充值金额');
+                    return;
+                }
+                if (customVal < 1) {
+                    app.showToast('充值金额至少1元');
+                    return;
+                }
+                amount = customVal;
+            }
+
+            if (!amount || amount <= 0) {
+                app.showToast('请选择或输入充值金额');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '创建订单...';
+
+            axios.post(app.walletServerUrl + '/wallet/recharge', null, {
+                params: {
+                    userId: user.userId,
+                    amount: amount,
+                    subject: '校园闪电侠充值'
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    var orderNo = data.orderNo;
+
+                    app.showToast('订单创建成功，跳转支付宝...');
+
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = app.walletServerUrl + '/wallet/pay';
+                    form.target = '_blank';
+
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'orderNo';
+                    input.value = orderNo;
+                    form.appendChild(input);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                    document.body.removeChild(form);
+
+                    startPolling(orderNo);
+                } else {
+                    app.showToast(res.data.msg || '创建订单失败');
+                }
+            }).catch(function(err) {
+                app.showToast('创建订单失败，请重试');
+            }).finally(function() {
+                document.getElementById('rechargeBtn').disabled = false;
+                document.getElementById('rechargeBtn').textContent = '立即充值';
+            });
+        });
+
+        // ===== 轮询 =====
+        function startPolling(orderNo) {
+            if (pollingTimer) {
+                clearInterval(pollingTimer);
+                pollingTimer = null;
+            }
+
+            var count = 0;
+            var maxAttempts = 60;
+            var interval = 3000;
+
+            app.showToast('⏳ 支付处理中，请稍候...');
+
+            pollingTimer = setInterval(function() {
+                count++;
+
+                axios.get(app.walletServerUrl + '/wallet/orderStatus', {
+                    params: { orderNo: orderNo }
+                }).then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        var status = res.data.data.status;
+                        if (status === 1) {
+                            clearInterval(pollingTimer);
+                            pollingTimer = null;
+                            app.showToast('✅ 充值成功！');
+                            loadBalance();
+                            loadTransactions(1);
+                        } else if (status === 2) {
+                            clearInterval(pollingTimer);
+                            pollingTimer = null;
+                            app.showToast('❌ 充值失败，请重试');
+                        }
+                    }
+                }).catch(function(err) {
+                    // 继续轮询
+                });
+
+                if (count >= maxAttempts) {
+                    clearInterval(pollingTimer);
+                    pollingTimer = null;
+                    app.showToast('⏰ 支付处理超时，请稍后在交易记录中查看');
+                }
+            }, interval);
+        }
+
+        // ===== 检测支付宝同步回调 =====
+        function checkAlipayReturn() {
+            var orderNo = null;
+            var params = window.location.search.substring(1).split('&');
+            for (var i = 0; i < params.length; i++) {
+                var pair = params[i].split('=');
+                if (pair[0] === 'orderNo') {
+                    orderNo = decodeURIComponent(pair[1] || '');
+                    break;
+                }
+                if (pair[0] === 'out_trade_no' && !orderNo) {
+                    orderNo = decodeURIComponent(pair[1] || '');
+                }
+            }
+
+            if (!orderNo) {
+                console.log('未检测到订单号');
+                return;
+            }
+
+            console.log('检测到支付宝回调，订单号:', orderNo);
+
+            axios.get(app.walletServerUrl + '/wallet/confirmRecharge', {
+                params: { orderNo: orderNo }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('✅ 充值成功！');
+                    loadBalance();
+                    loadTransactions(1);
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                } else {
+                    app.showToast(res.data.msg || '充值确认失败，请联系客服');
+                }
+            }).catch(function(err) {
+                console.error('确认充值失败:', err);
+                app.showToast('充值确认失败，请稍后查看交易记录');
+            });
+        }
+
+        // ===== 加载更多 =====
+        document.getElementById('loadMoreTransBtn').addEventListener('click', function() {
+            transPage++;
+            loadTransactions(transPage);
+        });
+
+        // ===== 初始化 =====
+        if (!user) {
+            app.showToast('请先登录');
+            setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+        } else {
+            checkAlipayReturn();
+            app.loadUserInfo().then(function() {
+                loadBalance();
+                loadTransactions(1);
+                if (app.currentRole === 2) {
+                    document.getElementById('withdrawCard').style.display = 'block';
+                } else {
+                    document.getElementById('withdrawCard').style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

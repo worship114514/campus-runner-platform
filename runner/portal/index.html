@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .main-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-6);
+            padding: var(--space-6) 0;
+        }
+
+        .task-filters {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+        }
+        .task-filters select,
+        .task-filters input {
+            padding: var(--space-2) var(--space-3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-full);
+            background: var(--bg-secondary);
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+        }
+        .task-filters select:focus,
+        .task-filters input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+        }
+        .task-list {
+            max-height: 650px;
+            overflow-y: auto;
+        }
+        .task-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: var(--space-4);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-3);
+            background: var(--bg-secondary);
+        }
+        .task-item:hover {
+            border-color: var(--primary-500);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .task-item .task-title {
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-1);
+        }
+        .task-item .task-title .reward {
+            color: var(--primary-500);
+            font-weight: 700;
+        }
+        .task-item .task-desc {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+        .task-item .task-meta {
+            display: flex;
+            gap: var(--space-4);
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .task-item .task-actions {
+            margin-top: var(--space-3);
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-3);
+        }
+        .quick-action-btn {
+            padding: var(--space-4);
+            text-align: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: var(--font-size-sm);
+        }
+        .quick-action-btn:hover {
+            border-color: var(--primary-500);
+            background: var(--bg-hover);
+        }
+        .quick-action-btn .icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: var(--space-1);
+        }
+        .quick-action-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .quick-action-btn.disabled:hover {
+            border-color: var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .my-tabs {
+            display: flex;
+            gap: var(--space-1);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--space-3);
+        }
+        .my-tab {
+            padding: var(--space-2) var(--space-4);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .my-tab.active {
+            color: var(--primary-500);
+            border-bottom-color: var(--primary-500);
+        }
+        .my-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .my-task-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .my-task-item {
+            padding: var(--space-3);
+            border-bottom: 1px solid var(--border-color);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .my-task-item:hover {
+            background: var(--bg-hover);
+        }
+        .my-task-item .mt-title {
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+        }
+        .my-task-item .mt-status {
+            font-size: var(--font-size-sm);
+        }
+
+        .runner-panel {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-5);
+        }
+        .runner-panel .stat-row {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-top: var(--space-3);
+        }
+        .runner-panel .stat-row .num {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+        }
+        .runner-panel .stat-row .label {
+            font-size: var(--font-size-sm);
+            opacity: 0.9;
+        }
+
+        .map-container {
+            height: 200px;
+            background: var(--neutral-200);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            position: relative;
+        }
+        .map-container .map-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        .map-container .map-placeholder i {
+            font-size: 2rem;
+        }
+
+        .publish-hint {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-2);
+            background: var(--bg-hover);
+            border-radius: var(--radius-md);
+            margin-top: var(--space-2);
+        }
+
+        @media (max-width: 880px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .quick-actions {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <div class="main-layout">
+
+            <!-- 左侧：任务大厅 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>📋 任务大厅</span>
+                    <span style="font-size:var(--font-size-sm); color:var(--text-muted);" id="taskCount"></span>
+                </div>
+                <div class="card-body">
+                    <div class="task-filters">
+                        <select id="filterStatus">
+                            <option value="0">全部状态</option>
+                            <option value="1">待接单</option>
+                            <option value="2">进行中</option>
+                            <option value="4">已完成</option>
+                        </select>
+                        <select id="sortBy">
+                            <option value="newest">最新发布</option>
+                            <option value="reward_high">酬劳最高</option>
+                            <option value="reward_low">酬劳最低</option>
+                        </select>
+                        <input type="text" id="searchKeyword" placeholder="搜索任务..." style="flex:1; min-width:120px;">
+                        <button class="btn btn-primary btn-sm" id="searchBtn">搜索</button>
+                    </div>
+
+                    <div id="taskList" class="task-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <div class="empty-state-title">暂无任务</div>
+                            <div class="empty-state-description">发布第一个任务吧</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin-top:var(--space-3);">
+                        <button class="btn btn-secondary btn-sm" id="loadMoreBtn" style="display:none;">加载更多</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧面板 -->
+            <div class="right-panel">
+
+                <!-- 快速入口 -->
+                <div class="card">
+                    <div class="card-header">🚀 快速入口</div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <div class="quick-action-btn" id="publishBtn">
+                                <span class="icon">📝</span>
+                                发布任务
+                            </div>
+                            <div class="quick-action-btn" id="walletBtn">
+                                <span class="icon">💰</span>
+                                钱包
+                            </div>
+                            <div class="quick-action-btn" id="profileBtn">
+                                <span class="icon">👤</span>
+                                个人中心
+                            </div>
+                            <div class="quick-action-btn" id="messagesBtn">
+                                <span class="icon">💬</span>
+                                消息
+                            </div>
+                        </div>
+                        <div id="publishHint" class="publish-hint"></div>
+                    </div>
+                </div>
+
+                <!-- 跑腿员面板 -->
+                <div id="runnerPanel" class="runner-panel" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:var(--font-size-sm); opacity:0.9;">累计收入</div>
+                            <div style="font-size:var(--font-size-2xl); font-weight:700;" id="runnerEarnings">¥0.00</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:var(--font-size-sm); opacity:0.9;">已完成</div>
+                            <div style="font-size:var(--font-size-xl); font-weight:700;" id="runnerCompleted">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <div>
+                            <div class="num" id="runnerTodayEarnings">¥0</div>
+                            <div class="label">今日收入</div>
+                        </div>
+                        <div>
+                            <div class="num" id="runnerWeekEarnings">¥0</div>
+                            <div class="label">本周收入</div>
+                        </div>
+                        <div>
+                            <div class="num" id="runnerMonthEarnings">¥0</div>
+                            <div class="label">本月收入</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:var(--space-4); display:flex; gap:var(--space-2);">
+                        <button class="btn btn-secondary btn-sm" style="flex:1; background:rgba(255,255,255,0.2); color:white; border-color:rgba(255,255,255,0.3);" id="runnerCenterBtn">跑腿员中心</button>
+                        <button class="btn btn-secondary btn-sm" style="flex:1; background:rgba(255,255,255,0.2); color:white; border-color:rgba(255,255,255,0.3);" id="earningsBtn">收入明细</button>
+                    </div>
+                </div>
+
+                <!-- 我的任务 -->
+                <div class="card" id="myTasksCard">
+                    <div class="card-header">📌 我的任务</div>
+                    <div class="card-body">
+                        <div class="my-tabs" id="myTabs">
+                            <div class="my-tab active" data-tab="published">我发布的</div>
+                            <div class="my-tab" data-tab="accepted">我接的</div>
+                        </div>
+                        <div id="myTaskList" class="my-task-list">
+                            <div class="empty-state" style="padding:var(--space-4);">
+                                <div style="font-size:var(--font-size-sm); color:var(--text-muted);">暂无任务</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 地图 -->
+                <div class="card">
+                    <div class="card-header">📍 附近任务</div>
+                    <div class="card-body" style="padding:0;">
+                        <div class="map-container" id="mapContainer">
+                            <div class="map-placeholder">
+                                <i>🗺️</i>
+                                <span>地图加载中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../libs/moment.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        // ===== 全局状态 =====
+        var currentPage = 1;
+        var pageSize = 10;
+        var totalPages = 1;
+        var currentFilter = { status: 0, sort: 'newest', keyword: '' };
+        var currentTab = 'published';
+        var user = null;
+        var map = null;
+        var markers = [];
+
+        // ===== DOM引用 =====
+        var taskList = document.getElementById('taskList');
+        var myTaskList = document.getElementById('myTaskList');
+        var loadMoreBtn = document.getElementById('loadMoreBtn');
+
+        // ===== 页面初始化 =====
+        function initPage() {
+            user = app.getCurrentUser();
+            if (user) {
+                // 刷新用户信息
+                app.loadUserInfo().then(function() {
+                    renderRoleSpecificUI();
+                });
+            } else {
+                renderRoleSpecificUI();
+            }
+            loadTasks(1);
+            if (user) {
+                loadMyTasks('published');
+                loadRunnerData();
+            }
+            initMap();
+        }
+
+        // ===== 根据角色渲染UI =====
+        function renderRoleSpecificUI() {
+            var currentRole = app.currentRole;
+            var publishBtn = document.getElementById('publishBtn');
+            var publishHint = document.getElementById('publishHint');
+            var runnerPanel = document.getElementById('runnerPanel');
+
+            // 发布任务按钮
+            if (currentRole === 1) {
+                publishBtn.style.display = 'block';
+                publishHint.textContent = '💡 发布任务需要从余额支付酬劳';
+                publishHint.style.display = 'block';
+            } else if (currentRole === 2) {
+                publishBtn.style.display = 'none';
+                publishHint.textContent = '🏍️ 跑腿员模式：请在任务大厅接单';
+                publishHint.style.display = 'block';
+            } else {
+                publishBtn.style.display = 'block';
+                publishHint.textContent = '请登录后发布任务';
+                publishHint.style.display = 'block';
+            }
+
+            // 跑腿员面板
+            if (currentRole === 2) {
+                runnerPanel.style.display = 'block';
+            } else {
+                runnerPanel.style.display = 'none';
+            }
+
+            // 我的任务Tab
+            var tabs = document.querySelectorAll('.my-tab');
+            if (currentRole === 2) {
+                tabs.forEach(function(tab) {
+                    if (tab.dataset.tab === 'accepted') {
+                        tab.textContent = '我接的';
+                    }
+                });
+            } else {
+                tabs.forEach(function(tab) {
+                    if (tab.dataset.tab === 'accepted') {
+                        tab.textContent = '我接的';
+                    }
+                });
+            }
+        }
+
+        // ===== 加载任务列表 =====
+        function loadTasks(page) {
+            page = page || 1;
+            currentPage = page;
+
+            var params = {
+                page: page,
+                pageSize: pageSize,
+                status: currentFilter.status === 0 ? null : currentFilter.status,
+                keyword: currentFilter.keyword || null
+            };
+
+            axios.get(app.taskServerUrl + '/task/list', { params: params })
+                .then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        var data = res.data.data;
+                        var list = data.list || [];
+                        totalPages = Math.ceil((data.total || 0) / pageSize);
+
+                        // 排序
+                        if (currentFilter.sort === 'reward_high') {
+                            list.sort(function(a, b) { return b.rewardAmount - a.rewardAmount; });
+                        } else if (currentFilter.sort === 'reward_low') {
+                            list.sort(function(a, b) { return a.rewardAmount - b.rewardAmount; });
+                        } else {
+                            list.sort(function(a, b) { return new Date(b.createdTime) - new Date(a.createdTime); });
+                        }
+
+                        renderTaskList(list, page === 1);
+                        document.getElementById('taskCount').textContent = '共 ' + (data.total || 0) + ' 个任务';
+
+                        if (page < totalPages) {
+                            loadMoreBtn.style.display = 'inline-block';
+                        } else {
+                            loadMoreBtn.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(function(err) {
+                    console.error('加载任务失败:', err);
+                });
+        }
+
+        function renderTaskList(list, isNew) {
+            if (!list || list.length === 0) {
+                taskList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-title">暂无任务</div>
+                        <div class="empty-state-description">试试调整筛选条件</div>
+                    </div>
+                `;
+                return;
+            }
+
+            var currentRole = app.currentRole;
+            var html = '';
+            list.forEach(function(task) {
+                var statusText = app.getStatusText(task.status);
+                var statusClass = app.getStatusClass(task.status);
+                var isRunner = currentRole === 2 && task.status === 1;
+                var isPublisher = user && user.userId === task.publisherId;
+
+                html += `
+                    <div class="task-item" data-id="${task.id}">
+                        <div class="task-title">
+                            <span>${task.title}</span>
+                            <span class="reward">¥${parseFloat(task.rewardAmount).toFixed(2)}</span>
+                        </div>
+                        <div class="task-desc">${task.description || ''}</div>
+                        <div class="task-meta">
+                            <span>👤 ${task.publisherName || '用户'}</span>
+                            <span>📍 ${task.pickupLocation || '未设置'}</span>
+                            <span>📦 ${task.deliveryLocation || '未设置'}</span>
+                            <span class="badge ${statusClass}">${statusText}</span>
+                            <span>${app.getDateBeforeNow(new Date(task.createdTime).getTime())}</span>
+                        </div>
+                        <div class="task-actions">
+                            ${isRunner ? `<button class="btn btn-primary btn-sm accept-btn" data-id="${task.id}">接单</button>` : ''}
+                            ${isPublisher && task.status === 1 ? `<button class="btn btn-danger btn-sm cancel-btn" data-id="${task.id}">取消</button>` : ''}
+                            <button class="btn btn-secondary btn-sm detail-btn" data-id="${task.id}">查看详情</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            taskList.innerHTML = html;
+
+            // 绑定事件
+            taskList.querySelectorAll('.detail-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    window.location.href = 'task-detail.html?id=' + this.dataset.id;
+                });
+            });
+
+            taskList.querySelectorAll('.accept-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    acceptTask(this.dataset.id);
+                });
+            });
+
+            taskList.querySelectorAll('.cancel-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    cancelTask(this.dataset.id);
+                });
+            });
+
+            taskList.querySelectorAll('.task-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    window.location.href = 'task-detail.html?id=' + this.dataset.id;
+                });
+            });
+        }
+
+        // ===== 接单 =====
+        function acceptTask(taskId) {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1000);
+                return;
+            }
+
+            if (app.currentRole !== 2) {
+                app.showToast('只有跑腿员才能接单');
+                return;
+            }
+
+            var runnerName = app.getCookie('userName') || '跑腿员';
+
+            axios.post(app.taskServerUrl + '/task/accept', null, {
+                params: {
+                    taskId: taskId,
+                    runnerId: user.userId,
+                    runnerName: runnerName,
+                    runnerAvatar: ''
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('接单成功！');
+                    loadTasks(currentPage);
+                    loadMyTasks(currentTab);
+                    loadRunnerData();
+                } else {
+                    app.showToast(res.data.msg || '接单失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '接单失败，请重试');
+            });
+        }
+
+        // ===== 取消任务 =====
+        function cancelTask(taskId) {
+            if (!confirm('确定取消该任务吗？')) return;
+
+            axios.post(app.taskServerUrl + '/task/cancel', null, {
+                params: {
+                    taskId: taskId,
+                    userId: user.userId
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('任务已取消');
+                    loadTasks(currentPage);
+                    loadMyTasks(currentTab);
+                } else {
+                    app.showToast(res.data.msg || '取消失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '取消失败');
+            });
+        }
+
+        // ===== 加载我的任务 =====
+        function loadMyTasks(tab) {
+            tab = tab || currentTab;
+            if (!user) {
+                myTaskList.innerHTML = `
+                    <div class="empty-state" style="padding:var(--space-4);">
+                        <div style="font-size:var(--font-size-sm); color:var(--text-muted);">请先登录</div>
+                    </div>
+                `;
+                return;
+            }
+
+            var url = tab === 'published' ?
+                app.taskServerUrl + '/task/myPublished' :
+                app.taskServerUrl + '/task/myAccepted';
+
+            var params = {
+                page: 1,
+                pageSize: 20
+            };
+            if (tab === 'published') {
+                params.publisherId = user.userId;
+            } else {
+                params.runnerId = user.userId;
+            }
+
+            axios.get(url, { params: params })
+                .then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        var list = res.data.data.list || [];
+                        renderMyTasks(list, tab);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('加载我的任务失败:', err);
+                });
+        }
+
+        function renderMyTasks(list, tab) {
+            if (!list || list.length === 0) {
+                myTaskList.innerHTML = `
+                    <div class="empty-state" style="padding:var(--space-4);">
+                        <div style="font-size:var(--font-size-sm); color:var(--text-muted);">
+                            ${tab === 'published' ? '暂无发布的任务' : '暂无接单的任务'}
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            var html = '';
+            list.forEach(function(task) {
+                var statusText = app.getStatusText(task.status);
+                var statusClass = app.getStatusClass(task.status);
+                var runnerName = decodeName(task.runnerName) || '';
+                html += `
+                    <div class="my-task-item" onclick="window.location.href='task-detail.html?id=${task.id}'">
+                        <div class="mt-title">
+                            <span>${task.title}</span>
+                            <span class="badge ${statusClass}">${statusText}</span>
+                        </div>
+                        <div style="font-size:var(--font-size-sm); color:var(--text-muted);">
+                            ¥${parseFloat(task.rewardAmount).toFixed(2)}
+                            ${runnerName ? ' · 接单员: ' + runnerName : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            myTaskList.innerHTML = html;
+        }
+
+        // ===== 加载跑腿员数据 =====
+        function loadRunnerData() {
+            if (!user || app.currentRole !== 2) return;
+
+            axios.get(app.walletServerUrl + '/wallet/runnerStats', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    document.getElementById('runnerEarnings').textContent = '¥' + (data.totalEarnings || 0).toFixed(2);
+                    document.getElementById('runnerCompleted').textContent = data.completedCount || 0;
+                    document.getElementById('runnerTodayEarnings').textContent = '¥' + (data.todayEarnings || 0).toFixed(2);
+                    document.getElementById('runnerWeekEarnings').textContent = '¥' + (data.weekEarnings || 0).toFixed(2);
+                    document.getElementById('runnerMonthEarnings').textContent = '¥' + (data.monthEarnings || 0).toFixed(2);
+                }
+            }).catch(function(err) {
+                console.error('加载跑腿员数据失败:', err);
+            });
+        }
+
+        // ===== 地图初始化 =====
+        function initMap() {
+            var script = document.createElement('script');
+            script.src = 'https://webapi.amap.com/maps?v=2.0&key=8bdb8e93710c56a614e382cd16116c65&callback=mapReady';
+            document.head.appendChild(script);
+
+            window.mapReady = function() {
+                var container = document.getElementById('mapContainer');
+                container.innerHTML = '';
+                map = new AMap.Map('mapContainer', {
+                    zoom: 15,
+                    center: [106.7, 26.6],
+                    resizeEnable: true
+                });
+                AMap.plugin(['AMap.Geolocation'], function() {
+                    var geolocation = new AMap.Geolocation({
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        buttonPosition: 'RB'
+                    });
+                    map.addControl(geolocation);
+                });
+                loadNearbyTasks();
+            };
+        }
+
+        function loadNearbyTasks() {
+            if (!map) return;
+            axios.get(app.taskServerUrl + '/task/list', {
+                params: { page: 1, pageSize: 100, status: 1 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data.list || [];
+                    if (markers.length > 0) {
+                        map.remove(markers);
+                        markers = [];
+                    }
+                    list.forEach(function(task) {
+                        if (task.pickupLng && task.pickupLat) {
+                            var marker = new AMap.Marker({
+                                position: [parseFloat(task.pickupLng), parseFloat(task.pickupLat)],
+                                title: task.title,
+                                map: map,
+                                label: {
+                                    content: '¥' + parseFloat(task.rewardAmount).toFixed(2),
+                                    direction: 'top'
+                                }
+                            });
+                            marker.on('click', function() {
+                                window.location.href = 'task-detail.html?id=' + task.id;
+                            });
+                            markers.push(marker);
+                        }
+                    });
+                    if (markers.length > 0) {
+                        map.setFitView(markers);
+                    }
+                }
+            }).catch(function(err) {
+                console.error('加载附近任务失败:', err);
+            });
+        }
+
+        // ===== 事件绑定 =====
+        document.getElementById('filterStatus').addEventListener('change', function() {
+            currentFilter.status = parseInt(this.value);
+            loadTasks(1);
+        });
+
+        document.getElementById('sortBy').addEventListener('change', function() {
+            currentFilter.sort = this.value;
+            loadTasks(1);
+        });
+
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            currentFilter.keyword = document.getElementById('searchKeyword').value.trim();
+            loadTasks(1);
+        });
+
+        document.getElementById('searchKeyword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+
+        loadMoreBtn.addEventListener('click', function() {
+            if (currentPage < totalPages) {
+                loadTasks(currentPage + 1);
+            }
+        });
+
+        document.querySelectorAll('.my-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.my-tab').forEach(function(t) {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                currentTab = this.dataset.tab;
+                loadMyTasks(currentTab);
+            });
+        });
+
+        // 快速入口
+        document.getElementById('publishBtn').addEventListener('click', function() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1000);
+                return;
+            }
+            if (app.currentRole !== 1) {
+                app.showToast('只有普通用户才能发布任务，请切换到用户模式');
+                return;
+            }
+            window.location.href = 'publish.html';
+        });
+
+        document.getElementById('walletBtn').addEventListener('click', function() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1000);
+                return;
+            }
+            window.location.href = 'wallet.html';
+        });
+
+        document.getElementById('profileBtn').addEventListener('click', function() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1000);
+                return;
+            }
+            window.location.href = 'profile.html';
+        });
+
+        document.getElementById('messagesBtn').addEventListener('click', function() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1000);
+                return;
+            }
+            window.location.href = 'messages.html';
+        });
+
+        document.getElementById('runnerCenterBtn').addEventListener('click', function() {
+            window.location.href = app.runnerIndexUrl;
+        });
+
+        document.getElementById('earningsBtn').addEventListener('click', function() {
+            window.location.href = '../runner/earnings.html';
+        });
+
+        // 页面加载完成后执行
+        initPage();
+        function decodeName(name) {
+            if (!name) return '';
+            try {
+                return decodeURIComponent(name);
+            } catch(e) {
+                return name;
+            }
+        }
+    </script>
+
+</body>
+</html>

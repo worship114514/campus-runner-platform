@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .admin-sidebar {
+            width: 220px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: var(--space-4) 0;
+            flex-shrink: 0;
+        }
+        .admin-sidebar .logo {
+            padding: 0 var(--space-4) var(--space-4);
+            font-weight: 700;
+            font-size: var(--font-size-lg);
+            color: var(--primary-500);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--space-4);
+        }
+        .admin-sidebar .menu-item {
+            padding: var(--space-3) var(--space-4);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            display: block;
+            text-decoration: none;
+        }
+        .admin-sidebar .menu-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .admin-sidebar .menu-item.active {
+            border-left-color: var(--primary-500);
+            background: var(--bg-hover);
+            color: var(--primary-500);
+            font-weight: 500;
+        }
+        .admin-main {
+            flex: 1;
+            padding: var(--space-4) var(--space-6);
+            background: var(--bg-primary);
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--space-6);
+        }
+        .admin-header .title {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+        }
+        .admin-header .user {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .admin-header .user button {
+            margin-left: var(--space-2);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .stats-grid .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-4);
+            text-align: center;
+        }
+        .stats-grid .stat-card .number {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--primary-500);
+        }
+        .stats-grid .stat-card .label {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .table-wrap {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--font-size-sm);
+        }
+        table th,
+        table td {
+            padding: var(--space-3) var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+        table th {
+            background: var(--bg-hover);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        table tr:hover {
+            background: var(--bg-hover);
+        }
+        .action-btn {
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            border: none;
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            transition: all 0.2s;
+            margin-right: var(--space-1);
+        }
+        .action-btn.approve {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .action-btn.approve:hover {
+            background: #a7f3d0;
+        }
+        .action-btn.reject {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .action-btn.reject:hover {
+            background: #fecaca;
+        }
+        .action-btn.delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .action-btn.delete:hover {
+            background: #fecaca;
+        }
+        .action-btn.freeze {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .action-btn.freeze:hover {
+            background: #fde68a;
+        }
+        .action-btn.unfreeze {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .action-btn.unfreeze:hover {
+            background: #bfdbfe;
+        }
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+        }
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+        }
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+        }
+        .runner-tabs {
+            display: flex;
+            gap: var(--space-2);
+            margin-left: auto;
+            background: var(--bg-hover);
+            padding: var(--space-1);
+            border-radius: var(--radius-full);
+        }
+        .runner-tabs .runner-tab {
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .runner-tabs .runner-tab:hover {
+            color: var(--text-primary);
+        }
+        .runner-tabs .runner-tab.active {
+            background: var(--bg-secondary);
+            color: var(--primary-500);
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-bar {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-bar input,
+        .filter-bar select {
+            padding: var(--space-2) var(--space-3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-full);
+            background: var(--bg-secondary);
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+        }
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+        }
+        .trend-chart-container {
+            height: 250px;
+            width: 100%;
+        }
+        #trendChart {
+            height: 250px;
+            width: 100%;
+        }
+        .avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 60px;
+            }
+            .admin-sidebar .logo span {
+                display: none;
+            }
+            .admin-sidebar .menu-item span {
+                display: none;
+            }
+            .admin-main {
+                padding: var(--space-4);
+            }
+            .runner-tabs {
+                flex-wrap: wrap;
+                border-radius: var(--radius-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-layout">
+        <!-- 侧边栏 -->
+        <div class="admin-sidebar">
+            <div class="logo"><span>🏃 闪电侠</span></div>
+            <div class="menu-item active" data-tab="dashboard">📊 <span>仪表盘</span></div>
+            <div class="menu-item" data-tab="tasks">📋 <span>任务管理</span></div>
+            <div class="menu-item" data-tab="users">👤 <span>用户管理</span></div>
+            <div class="menu-item" data-tab="runners">🏍️ <span>跑腿员管理</span></div>
+        </div>
+
+        <!-- 主内容 -->
+        <div class="admin-main">
+            <div class="admin-header">
+                <div class="title" id="pageTitle">仪表盘</div>
+                <div class="user">
+                    <span id="adminName">管理员</span>
+                    <button class="btn btn-outline btn-sm" id="logoutBtn">退出</button>
+                </div>
+            </div>
+
+            <!-- ===== 仪表盘 ===== -->
+            <div class="tab-content active" id="tab-dashboard">
+                <div class="stats-grid" id="dashboardStats">
+                    <div class="stat-card"><div class="number" id="statUsers">0</div><div class="label">总用户</div></div>
+                    <div class="stat-card"><div class="number" id="statRunners">0</div><div class="label">跑腿员</div></div>
+                    <div class="stat-card"><div class="number" id="statTasks">0</div><div class="label">总任务</div></div>
+                    <div class="stat-card"><div class="number" id="statCompleted">0</div><div class="label">已完成</div></div>
+                    <div class="stat-card"><div class="number" id="statAmount">¥0</div><div class="label">平台流水</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📈 近期趋势</div>
+                    <div class="card-body">
+                        <div class="trend-chart-container">
+                            <div id="trendChart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 任务管理 ===== -->
+            <div class="tab-content" id="tab-tasks">
+                <div class="card">
+                    <div class="card-header">📋 任务管理</div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <select id="taskFilterStatus">
+                                <option value="0">全部状态</option>
+                                <option value="1">待接单</option>
+                                <option value="2">进行中</option>
+                                <option value="3">待确认</option>
+                                <option value="4">已完成</option>
+                                <option value="5">已取消</option>
+                            </select>
+                            <input type="text" id="taskSearch" placeholder="搜索任务..." style="flex:1; min-width:150px;">
+                            <button class="btn btn-primary btn-sm" id="taskSearchBtn">搜索</button>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr><th>标题</th><th>酬劳</th><th>状态</th><th>发布者</th><th>跑腿员</th><th>操作</th></tr>
+                                </thead>
+                                <tbody id="taskTableBody">
+                                    <tr><td colspan="6" style="text-align:center; padding:var(--space-8);">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 用户管理 ===== -->
+            <div class="tab-content" id="tab-users">
+                <div class="card">
+                    <div class="card-header">👤 用户管理</div>
+                    <div class="card-body">
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr><th>昵称</th><th>手机号</th><th>角色</th><th>状态</th><th>操作</th></tr>
+                                </thead>
+                                <tbody id="userTableBody">
+                                    <tr><td colspan="5" style="text-align:center; padding:var(--space-8);">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 跑腿员管理 ===== -->
+            <div class="tab-content" id="tab-runners">
+                <div class="card">
+                    <div class="card-header">
+                        🏍️ 跑腿员管理
+                        <div class="runner-tabs" id="runnerTabs">
+                            <span class="runner-tab active" data-status="pending">待审核</span>
+                            <span class="runner-tab" data-status="active">已通过</span>
+                            <span class="runner-tab" data-status="frozen">已冻结</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-wrap">
+                            <table>
+                                <thead id="runnerTableHead">
+                                    <tr>
+                                        <th>姓名</th>
+                                        <th>手机号</th>
+                                        <th>人脸照片</th>
+                                        <th>申请时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="runnerTableBody">
+                                    <tr><td colspan="4" style="text-align:center; padding:var(--space-8);">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../libs/echarts.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        // ===== 管理员认证 =====
+        var admin = {
+            id: app.getCookie('aid'),
+            token: app.getCookie('atoken'),
+            name: app.getCookie('adminName')
+        };
+
+        // 解码管理员名字
+        var adminName = admin.name || '管理员';
+        try {
+            adminName = decodeURIComponent(adminName);
+        } catch(e) {}
+        document.getElementById('adminName').textContent = adminName;
+
+        // 检查登录
+        if (!admin.id || !admin.token) {
+            window.location.href = 'login.html';
+        }
+
+        // ===== Axios 请求拦截器 - 管理员认证 =====
+        axios.interceptors.request.use(function(config) {
+            var aid = app.getCookie('aid');
+            var atoken = app.getCookie('atoken');
+            if (aid && atoken) {
+                config.headers['adminUserId'] = aid;
+                config.headers['adminUserToken'] = atoken;
+            }
+            return config;
+        }, function(error) {
+            return Promise.reject(error);
+        });
+
+        // ===== 退出 =====
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            app.deleteCookie('aid');
+            app.deleteCookie('atoken');
+            app.deleteCookie('adminName');
+            window.location.href = 'login.html';
+        });
+
+        // ===== Tab切换 =====
+        document.querySelectorAll('.admin-sidebar .menu-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.admin-sidebar .menu-item').forEach(function(m) {
+                    m.classList.remove('active');
+                });
+                this.classList.add('active');
+                var tab = this.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(function(t) {
+                    t.classList.remove('active');
+                });
+                document.getElementById('tab-' + tab).classList.add('active');
+                document.getElementById('pageTitle').textContent = this.textContent.trim();
+
+                if (tab === 'dashboard') loadDashboard();
+                if (tab === 'tasks') loadTasks();
+                if (tab === 'users') loadUsers();
+                if (tab === 'runners') loadRunners('pending');
+            });
+        });
+
+        // ===== 跑腿员管理 Tab切换 =====
+        document.addEventListener('click', function(e) {
+            var tab = e.target.closest('.runner-tab');
+            if (!tab) return;
+            document.querySelectorAll('.runner-tab').forEach(function(t) {
+                t.classList.remove('active');
+            });
+            tab.classList.add('active');
+            var status = tab.dataset.status;
+            loadRunners(status);
+        });
+
+        // ===== 加载仪表盘 =====
+        function loadDashboard() {
+            axios.get(app.adminServerUrl + '/admin/stats/overview')
+                .then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        var data = res.data.data || {};
+                        document.getElementById('statUsers').textContent = data.totalUsers || 0;
+                        document.getElementById('statRunners').textContent = data.totalRunners || 0;
+                        document.getElementById('statTasks').textContent = data.totalTasks || 0;
+                        document.getElementById('statCompleted').textContent = data.completedTasks || 0;
+                        document.getElementById('statAmount').textContent = '¥' + (data.totalAmount || 0).toFixed(2);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('加载仪表盘失败:', err);
+                });
+
+            axios.get(app.adminServerUrl + '/admin/stats/trend')
+                .then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        var data = res.data.data || {};
+                        initTrendChart(data);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('加载趋势数据失败:', err);
+                });
+        }
+
+        function initTrendChart(data) {
+            var container = document.getElementById('trendChart');
+            if (!container) return;
+            if (typeof echarts === 'undefined') {
+                container.innerHTML = '图表库加载中...';
+                return;
+            }
+            var chart = echarts.init(container);
+            var option = {
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['任务数', '用户数'] },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: data.dates || ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+                },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: '任务数', type: 'line', data: data.tasks || [0, 0, 0, 0, 0, 0, 0] },
+                    { name: '用户数', type: 'line', data: data.users || [0, 0, 0, 0, 0, 0, 0] }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', function() { chart.resize(); });
+        }
+
+        // ===== 加载任务 =====
+        function loadTasks() {
+            var status = document.getElementById('taskFilterStatus').value;
+            var keyword = document.getElementById('taskSearch').value.trim();
+
+            axios.get(app.adminServerUrl + '/admin/task/list', {
+                params: { page: 1, pageSize: 50, status: status === '0' ? null : status, keyword: keyword || null }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data.list || [];
+                    renderTasks(list);
+                }
+            }).catch(function(err) {
+                console.error('加载任务失败:', err);
+                document.getElementById('taskTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:var(--space-8);">加载失败</td></tr>';
+            });
+        }
+
+        function renderTasks(list) {
+            var tbody = document.getElementById('taskTableBody');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:var(--space-8);">暂无任务</td></tr>';
+                return;
+            }
+            var statusMap = { 1: '待接单', 2: '进行中', 3: '待确认', 4: '已完成', 5: '已取消' };
+            var statusClassMap = { 1: 'badge-warning', 2: 'badge-info', 3: 'badge-info', 4: 'badge-success', 5: 'badge-danger' };
+            var html = '';
+            list.forEach(function(task) {
+                html += `
+                    <tr>
+                        <td>${task.title}</td>
+                        <td>¥${parseFloat(task.rewardAmount).toFixed(2)}</td>
+                        <td><span class="badge ${statusClassMap[task.status] || ''}">${statusMap[task.status] || '未知'}</span></td>
+                        <td>${task.publisherName || ''}</td>
+                        <td>${task.runnerName ? decodeURIComponent(task.runnerName) : '—'}</td>
+                        <td><button class="action-btn delete" onclick="deleteTask('${task.id}')">删除</button></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function deleteTask(taskId) {
+            if (!confirm('确认删除该任务？')) return;
+            axios.delete(app.adminServerUrl + '/admin/task/delete', {
+                params: { taskId: taskId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('删除成功');
+                    loadTasks();
+                } else {
+                    app.showToast(res.data.msg || '删除失败');
+                }
+            }).catch(function(err) {
+                app.showToast('删除失败');
+            });
+        }
+
+        document.getElementById('taskSearchBtn').addEventListener('click', loadTasks);
+        document.getElementById('taskFilterStatus').addEventListener('change', loadTasks);
+        document.getElementById('taskSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') loadTasks();
+        });
+
+        // ===== 加载用户 =====
+        function loadUsers() {
+            axios.get(app.adminServerUrl + '/admin/user/list', {
+                params: { page: 1, pageSize: 50 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data.list || [];
+                    renderUsers(list);
+                }
+            }).catch(function(err) {
+                console.error('加载用户失败:', err);
+                document.getElementById('userTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:var(--space-8);">加载失败</td></tr>';
+            });
+        }
+
+        function renderUsers(list) {
+            var tbody = document.getElementById('userTableBody');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:var(--space-8);">暂无用户</td></tr>';
+                return;
+            }
+            var roleMap = { 1: '普通用户', 2: '跑腿员', 3: '管理员' };
+            var statusMap = { 1: '正常', 2: '已冻结', 3: '审核中' };
+            var html = '';
+            list.forEach(function(user) {
+                html += `
+                    <tr>
+                        <td>${user.nickname || user.username || ''}</td>
+                        <td>${user.mobile || ''}</td>
+                        <td>${roleMap[user.userRole] || '未知'}</td>
+                        <td>${statusMap[user.activeStatus] || '未知'}</td>
+                        <td>
+                            ${user.activeStatus === 2 ?
+                                `<button class="action-btn approve" onclick="unfreezeUser('${user.id}')">解冻</button>` :
+                                `<button class="action-btn reject" onclick="freezeUser('${user.id}')">冻结</button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function freezeUser(userId) {
+            if (!confirm('确认冻结该用户？')) return;
+            axios.post(app.adminServerUrl + '/admin/user/freeze', null, {
+                params: { userId: userId, status: 2 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已冻结');
+                    loadUsers();
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast('操作失败');
+            });
+        }
+
+        function unfreezeUser(userId) {
+            if (!confirm('确认解冻该用户？')) return;
+            axios.post(app.adminServerUrl + '/admin/user/freeze', null, {
+                params: { userId: userId, status: 1 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已解冻');
+                    loadUsers();
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast('操作失败');
+            });
+        }
+
+        // ===== 跑腿员管理 =====
+        var currentRunnerStatus = 'pending';
+
+        function loadRunners(status) {
+            currentRunnerStatus = status || 'pending';
+            var url = status === 'pending' ?
+                app.adminServerUrl + '/admin/runner/pending' :
+                app.adminServerUrl + '/admin/runner/list';
+
+            var params = { page: 1, pageSize: 50 };
+            if (status === 'active') params.status = 1;
+            else if (status === 'frozen') params.status = 2;
+
+            axios.get(url, { params: params })
+                .then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        var list = res.data.data.list || [];
+                        var total = res.data.data.total || 0;
+                        renderRunners(list, status);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('加载跑腿员失败:', err);
+                    document.getElementById('runnerTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:var(--space-8);">加载失败</td></tr>';
+                });
+        }
+
+        function renderRunners(list, status) {
+            var tbody = document.getElementById('runnerTableBody');
+            var thead = document.getElementById('runnerTableHead');
+
+            if (status === 'pending') {
+                // 表头增加"人脸照片"
+                thead.innerHTML = '<tr><th>姓名</th><th>手机号</th><th>人脸照片</th><th>申请时间</th><th>操作</th></tr>';
+                
+                if (!list || list.length === 0) {
+                    // colspan 从 4 改为 5
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:var(--space-8);">暂无待审核申请</td></tr>';
+                    return;
+                }
+                
+                var html = '';
+                list.forEach(function(app) {
+                    var time = app.createdTime ? new Date(app.createdTime).toLocaleDateString() : '';
+                    
+                    // 构建人脸图片HTML
+                    var faceHtml = '';
+                    if (app.faceImage) {
+                        faceHtml = `<img src="${app.faceImage}" 
+                                    style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #ddd;cursor:pointer;"
+                                    onclick="window.open('${app.faceImage}')"
+                                    onerror="this.style.display='none'">`;
+                    } else {
+                        faceHtml = '<span style="color:#999;font-size:12px;">未上传</span>';
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${app.realName || app.userId || ''}</td>
+                            <td>${app.phone || ''}</td>
+                            <td>${faceHtml}</td>
+                            <td>${time}</td>
+                            <td>
+                                <button class="action-btn approve" onclick="approveRunner('${app.id}')">通过</button>
+                                <button class="action-btn reject" onclick="rejectRunner('${app.id}')">拒绝</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            } else {
+                var isFrozen = status === 'frozen';
+                
+                // ===== 表头增加"人脸照片"列 =====
+                thead.innerHTML = isFrozen ?
+                    '<tr><th>姓名</th><th>手机号</th><th>人脸照片</th><th>冻结原因</th><th>操作</th></tr>' :
+                    '<tr><th>姓名</th><th>手机号</th><th>人脸照片</th><th>状态</th><th>操作</th></tr>';
+                
+                if (!list || list.length === 0) {
+                    // colspan 从 4 改为 5
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:var(--space-8);">暂无${isFrozen ? '冻结' : '已通过'}的跑腿员</td></tr>`;
+                    return;
+                }
+                
+                var html = '';
+                list.forEach(function(user) {
+                    var isUserFrozen = user.activeStatus === 2;
+                    if (isFrozen && !isUserFrozen) return;
+                    if (!isFrozen && isUserFrozen) return;
+                    
+                    // ===== 构建人脸图片HTML =====
+                    // 注意：user.face 现在存储的是图片URL（后端已转换）
+                    var faceHtml = '';
+                    if (user.face && user.face.indexOf('http') === 0) {
+                        faceHtml = `<img src="${user.face}" 
+                                    style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #ddd;cursor:pointer;"
+                                    onclick="window.open('${user.face}')"
+                                    onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'color:#999;font-size:12px;\'>加载失败</span>'">`;
+                    } else {
+                        faceHtml = '<span style="color:#999;font-size:12px;">暂无</span>';
+                    }
+                    // ===== 结束 =====
+                    
+                    if (isFrozen) {
+                        html += `
+                            <tr>
+                                <td>${user.nickname || user.username || ''}</td>
+                                <td>${user.mobile || ''}</td>
+                                <td>${faceHtml}</td>
+                                <td>${user.freezeReason || '违规操作'}</td>
+                                <td>
+                                    <button class="action-btn unfreeze" onclick="unfreezeRunner('${user.id}')">解冻</button>
+                                    <button class="action-btn delete" onclick="deleteRunner('${user.id}')">删除</button>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        html += `
+                            <tr>
+                                <td>${user.nickname || user.username || ''}</td>
+                                <td>${user.mobile || ''}</td>
+                                <td>${faceHtml}</td>
+                                <td><span class="badge-success">正常</span></td>
+                                <td>
+                                    <button class="action-btn freeze" onclick="freezeRunner('${user.id}')">冻结</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+                tbody.innerHTML = html;
+            }
+        }
+
+        // ===== 跑腿员操作 =====
+        function approveRunner(applicationId) {
+            if (!confirm('确认通过该跑腿员申请？')) return;
+            axios.post(app.adminServerUrl + '/admin/runner/approve', null, {
+                params: { applicationId: applicationId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('审核通过');
+                    loadRunners(currentRunnerStatus);
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast('操作失败');
+            });
+        }
+
+        function rejectRunner(applicationId) {
+            var reason = prompt('请输入拒绝原因（选填）：');
+            if (reason === null) return;
+            axios.post(app.adminServerUrl + '/admin/runner/reject', null, {
+                params: { applicationId: applicationId, reason: reason }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已拒绝');
+                    loadRunners(currentRunnerStatus);
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast('操作失败');
+            });
+        }
+
+        function freezeRunner(userId) {
+            if (!confirm('确认冻结该跑腿员？冻结后将无法接单')) return;
+            axios.post(app.adminServerUrl + '/admin/runner/freeze', null, {
+                params: { userId: userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已冻结');
+                    loadRunners(currentRunnerStatus);
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast('操作失败');
+            });
+        }
+
+        function unfreezeRunner(userId) {
+            if (!confirm('确认解冻该跑腿员？')) return;
+            axios.post(app.adminServerUrl + '/admin/runner/unfreeze', null, {
+                params: { userId: userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已解冻');
+                    loadRunners(currentRunnerStatus);
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast('操作失败');
+            });
+        }
+
+        function deleteRunner(userId) {
+            if (!confirm('确认删除该跑腿员身份？此操作将使其变为普通用户')) return;
+            axios.delete(app.adminServerUrl + '/admin/runner/delete', {
+                params: { userId: userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已删除');
+                    loadRunners(currentRunnerStatus);
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast('操作失败');
+            });
+        }
+
+        // ===== 初始化加载仪表盘 =====
+        loadDashboard();
+    </script>
+
+</body>
+</html>

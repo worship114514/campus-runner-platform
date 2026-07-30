@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帮助中心 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .help-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .help-categories {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-6);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--space-4);
+        }
+        .help-categories .cat-btn {
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .help-categories .cat-btn.active {
+            background: var(--primary-500);
+            color: white;
+        }
+        .help-categories .cat-btn:hover:not(.active) {
+            background: var(--bg-hover);
+        }
+        .faq-section {
+            display: none;
+        }
+        .faq-section.active {
+            display: block;
+        }
+        .faq-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-3);
+            overflow: hidden;
+        }
+        .faq-item .question {
+            padding: var(--space-4) var(--space-5);
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .faq-item .question:hover {
+            background: var(--bg-hover);
+        }
+        .faq-item .question .arrow {
+            transition: transform 0.3s;
+        }
+        .faq-item .question .arrow.open {
+            transform: rotate(180deg);
+        }
+        .faq-item .answer {
+            padding: 0 var(--space-5) var(--space-5) var(--space-5);
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            line-height: 1.8;
+            display: none;
+            border-top: 1px solid var(--border-color);
+        }
+        .faq-item .answer.open {
+            display: block;
+        }
+        .contact-card {
+            background: var(--neutral-50);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            text-align: center;
+            margin-top: var(--space-6);
+        }
+        .contact-card h3 {
+            margin-bottom: var(--space-2);
+        }
+        .contact-card p {
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+        }
+        .contact-card .actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: center;
+            margin-top: var(--space-4);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="help-page">
+        <div class="card">
+            <div class="card-header">❓ 帮助中心</div>
+            <div class="card-body">
+
+                <div class="help-categories">
+                    <button class="cat-btn active" data-cat="user">用户帮助</button>
+                    <button class="cat-btn" data-cat="runner">跑腿员帮助</button>
+                    <button class="cat-btn" data-cat="payment">支付与钱包</button>
+                    <button class="cat-btn" data-cat="other">其他问题</button>
+                </div>
+
+                <!-- 用户帮助 -->
+                <div class="faq-section active" id="faq-user">
+                    <div class="faq-item">
+                        <div class="question">如何发布跑腿任务？ <span class="arrow">▼</span></div>
+                        <div class="answer">登录后点击首页「发布任务」按钮，填写任务标题、描述、酬劳和地址信息，点击发布即可。任务发布后会自动出现在任务大厅中。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">如何确认任务完成？ <span class="arrow">▼</span></div>
+                        <div class="answer">跑腿员送达并标记「已送达」后，您会收到通知。在任务详情页点击「确认完成」即可完成任务，酬劳将自动发放给跑腿员。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">任务可以取消吗？ <span class="arrow">▼</span></div>
+                        <div class="answer">在任务未被接单前，您可以随时取消任务，酬劳将全额退还到您的账户余额。任务被接单后如需取消，请联系跑腿员协商。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">如何给跑腿员评价？ <span class="arrow">▼</span></div>
+                        <div class="answer">任务完成后，在任务详情页可以给跑腿员打分（1-5星）并留下评语。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">我的余额可以做什么？ <span class="arrow">▼</span></div>
+                        <div class="answer">余额可用于发布任务支付酬劳。您可以在「钱包」页面进行充值。</div>
+                    </div>
+                </div>
+
+                <!-- 跑腿员帮助 -->
+                <div class="faq-section" id="faq-runner">
+                    <div class="faq-item">
+                        <div class="question">如何成为跑腿员？ <span class="arrow">▼</span></div>
+                        <div class="answer">注册时选择「跑腿员」身份，填写真实姓名、身份证号并提交人脸照片。管理员审核通过后即可开始接单。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">如何接单？ <span class="arrow">▼</span></div>
+                        <div class="answer">在任务大厅中，所有待接单的任务都会显示「接单」按钮。点击即可接单。接单前请确保您的接单开关处于开启状态。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">完成任务后如何获得报酬？ <span class="arrow">▼</span></div>
+                        <div class="answer">送达物品后点击「标记送达」，等待用户确认。用户确认后，酬劳会自动计入您的账户收入。您可以在「钱包」页面查看收入和申请提现。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">提现多久到账？ <span class="arrow">▼</span></div>
+                        <div class="answer">提现申请提交后，平台会通过支付宝转账，预计1-3个工作日到账。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">接单开关是做什么的？ <span class="arrow">▼</span></div>
+                        <div class="answer">接单开关控制您是否接收新订单。关闭后，任务大厅中将不会显示「接单」按钮。</div>
+                    </div>
+                </div>
+
+                <!-- 支付与钱包 -->
+                <div class="faq-section" id="faq-payment">
+                    <div class="faq-item">
+                        <div class="question">如何充值？ <span class="arrow">▼</span></div>
+                        <div class="answer">进入「钱包」页面，选择充值金额，点击「立即充值」跳转到支付宝完成支付。充值后余额将实时到账。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">提现需要手续费吗？ <span class="arrow">▼</span></div>
+                        <div class="answer">平台暂不收取提现手续费。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">最低提现金额是多少？ <span class="arrow">▼</span></div>
+                        <div class="answer">最低提现金额为1元，单次提现金额不得超过可用余额。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">充值后可以退款吗？ <span class="arrow">▼</span></div>
+                        <div class="answer">充值金额不支持退款，请谨慎充值。如有特殊情况，请联系客服处理。</div>
+                    </div>
+                </div>
+
+                <!-- 其他问题 -->
+                <div class="faq-section" id="faq-other">
+                    <div class="faq-item">
+                        <div class="question">遇到问题如何联系客服？ <span class="arrow">▼</span></div>
+                        <div class="answer">您可以通过「联系我们」页面找到客服联系方式，也可在线留言，我们会尽快回复。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">账号被禁用了怎么办？ <span class="arrow">▼</span></div>
+                        <div class="answer">账号被禁用通常是因为违反了平台规则。请联系客服了解原因并申请解封。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">如何修改个人信息？ <span class="arrow">▼</span></div>
+                        <div class="answer">登录后进入「个人中心」，可以修改昵称、头像等信息。</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="question">地图选点功能如何使用？ <span class="arrow">▼</span></div>
+                        <div class="answer">发布任务时，点击「地图选点」按钮，在地图上选择取件/送件位置。功能开发中，即将上线。</div>
+                    </div>
+                </div>
+
+                <div class="contact-card">
+                    <h3>💬 仍然有疑问？</h3>
+                    <p>我们的客服团队会尽快为您解答</p>
+                    <div class="actions">
+                        <a href="contact.html"><button class="btn btn-secondary">在线留言</button></a>
+                        <a href="../runner/index.html"><button class="btn btn-secondary">返回首页</button></a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        // 分类切换
+        document.querySelectorAll('.cat-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.cat-btn').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+                var cat = this.dataset.cat;
+                document.querySelectorAll('.faq-section').forEach(function(s) {
+                    s.classList.remove('active');
+                });
+                document.getElementById('faq-' + cat).classList.add('active');
+            });
+        });
+
+        // FAQ展开/收起
+        document.querySelectorAll('.faq-item .question').forEach(function(q) {
+            q.addEventListener('click', function() {
+                var answer = this.nextElementSibling;
+                var arrow = this.querySelector('.arrow');
+                answer.classList.toggle('open');
+                arrow.classList.toggle('open');
+            });
+        });
+    </script>
+
+</body>
+</html>

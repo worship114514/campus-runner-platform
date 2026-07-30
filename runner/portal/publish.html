@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布任务 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .publish-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .publish-page .card {
+            margin-bottom: var(--space-6);
+        }
+        .form-hint {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            margin-top: var(--space-1);
+        }
+        .balance-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-4);
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
+            font-size: var(--font-size-sm);
+        }
+        .balance-info .amount {
+            font-weight: 700;
+            color: var(--primary-500);
+            font-size: var(--font-size-lg);
+        }
+        .role-warning {
+            background: #fef3c7;
+            color: #92400e;
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
+            font-size: var(--font-size-sm);
+        }
+        .role-warning a {
+            color: var(--primary-500);
+            font-weight: 500;
+        }
+        .role-warning a:hover {
+            text-decoration: underline;
+        }
+        .location-row {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        .location-row input {
+            flex: 1;
+            min-width: 200px;
+        }
+        .location-row .map-btn {
+            white-space: nowrap;
+        }
+
+        /* 地图模态框 */
+        .map-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .map-modal-overlay.active {
+            display: flex;
+        }
+        .map-modal-box {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-2xl);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .map-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-4) var(--space-5);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .map-modal-header h3 {
+            margin: 0;
+        }
+        .map-modal-header .close-btn {
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0 var(--space-2);
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .map-modal-header .close-btn:hover {
+            color: var(--text-primary);
+        }
+        .map-container {
+            height: 450px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .map-modal-body {
+            padding: var(--space-4) var(--space-5);
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .map-modal-body .selected-address {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-3);
+        }
+        .map-modal-body .selected-address strong {
+            color: var(--text-primary);
+        }
+        .map-modal-body .btn-group {
+            display: flex;
+            gap: var(--space-3);
+        }
+        .map-modal-body .btn-group button {
+            flex: 1;
+        }
+        .map-tip {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-2);
+            background: var(--neutral-50);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-3);
+        }
+        .locate-btn-row {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+        .locate-btn-row button {
+            flex: 1;
+        }
+        .location-status {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .location-status .success {
+            color: var(--success-500);
+        }
+        .location-status .error {
+            color: var(--error-500);
+        }
+        @media (max-width: 640px) {
+            .map-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="publish-page">
+        <div class="card">
+            <div class="card-header">📝 发布新任务</div>
+            <div class="card-body">
+
+                <div id="roleWarning" class="role-warning" style="display:none;"></div>
+
+                <div class="balance-info">
+                    <span>💰 当前余额</span>
+                    <span class="amount" id="userBalance">¥0.00</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">任务标题</label>
+                    <input type="text" id="taskTitle" class="form-input" placeholder="例：代取快递、代买午餐" maxlength="64">
+                    <div class="form-hint">简洁明了，让跑腿员快速了解任务</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">任务描述</label>
+                    <textarea id="taskDesc" class="form-textarea" rows="4" placeholder="详细描述任务要求、时间、特殊说明等"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">酬劳 (元)</label>
+                    <input type="number" id="rewardAmount" class="form-input" placeholder="请输入酬劳金额" min="0.5" step="0.5">
+                    <div class="form-hint">任务完成后，酬劳将发放给跑腿员</div>
+                </div>
+
+                <!-- ===== 取件地址 ===== -->
+                <div class="form-group">
+                    <label class="form-label">取件地址 <span style="color:var(--error-500);">*</span></label>
+                    <div class="location-row">
+                        <input type="text" id="pickupLocation" class="form-input" placeholder="点击右侧「地图选点」选择位置" readonly>
+                        <button class="btn btn-secondary btn-sm map-btn" id="pickupMapBtn" type="button">📍 地图选点</button>
+                    </div>
+                    <div class="location-status" id="pickupStatus">
+                        <span>📍 点击「地图选点」选择取件位置</span>
+                    </div>
+                    <input type="hidden" id="pickupLng">
+                    <input type="hidden" id="pickupLat">
+                </div>
+
+                <!-- ===== 送件地址 ===== -->
+                <div class="form-group">
+                    <label class="form-label">送件地址 <span style="color:var(--error-500);">*</span></label>
+                    <div class="location-row">
+                        <input type="text" id="deliveryLocation" class="form-input" placeholder="点击右侧「地图选点」选择位置" readonly>
+                        <button class="btn btn-secondary btn-sm map-btn" id="deliveryMapBtn" type="button">📍 地图选点</button>
+                    </div>
+                    <div class="location-status" id="deliveryStatus">
+                        <span>📍 点击「地图选点」选择送件位置</span>
+                    </div>
+                    <input type="hidden" id="deliveryLng">
+                    <input type="hidden" id="deliveryLat">
+                </div>
+
+                <div style="display:flex; gap:var(--space-3); margin-top:var(--space-4);">
+                    <button class="btn btn-secondary" id="cancelBtn" style="flex:1;">取消</button>
+                    <button class="btn btn-primary" id="publishBtn" style="flex:2;">发布任务</button>
+                </div>
+
+                <div class="form-hint" style="margin-top:var(--space-4); text-align:center;">
+                    ⚠️ 发布任务将扣除相应酬劳，任务未接单前可取消退款
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 地图选点模态框 ===== -->
+    <div class="map-modal-overlay" id="mapModal">
+        <div class="map-modal-box">
+            <div class="map-modal-header">
+                <h3 id="mapModalTitle">📍 选择位置</h3>
+                <span class="close-btn" id="mapModalClose">✕</span>
+            </div>
+            <div class="map-container" id="mapContainer"></div>
+            <div class="map-modal-body">
+                <div class="map-tip">💡 点击地图上的位置选择，或点击下方按钮定位到当前位置</div>
+                <div class="locate-btn-row">
+                    <button class="btn btn-secondary btn-sm" id="locateMeBtn">📍 定位到我的位置</button>
+                </div>
+                <div class="selected-address">
+                    <strong>已选位置：</strong>
+                    <span id="selectedAddress">请在地图上点击选择</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="mapCancelBtn">取消</button>
+                    <button class="btn btn-primary" id="mapConfirmBtn">确认选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var currentTarget = null; // 'pickup' or 'delivery'
+        var selectedAddress = '';
+        var selectedLng = null;
+        var selectedLat = null;
+        var map = null;
+        var marker = null;
+        var geocoder = null;
+        var isMapReady = false;
+
+        // ===== 页面初始化 =====
+        function initPage() {
+            var session = app.getCurrentUser();
+            if (!session) {
+                showLoginWarning('请先登录才能发布任务', 'login.html');
+                loadBalance();
+                return;
+            }
+
+            app.loadUserInfo().then(function(user) {
+                if (app.currentRole !== 1) {
+                    if (app.currentRole === 2) {
+                        showLoginWarning('当前是跑腿员模式，请切换为普通用户再发布任务', 'profile.html');
+                    } else {
+                        showLoginWarning('您没有权限发布任务，请联系管理员', '#');
+                    }
+                } else {
+                    document.getElementById('roleWarning').style.display = 'none';
+                }
+                loadBalance();
+            }).catch(function() {
+                loadBalance();
+            });
+
+            // 加载高德地图
+            loadAMap();
+        }
+
+        function showLoginWarning(msg, link) {
+            var warning = document.getElementById('roleWarning');
+            warning.style.display = 'block';
+            warning.innerHTML = '⚠️ ' + msg + '，<a href="' + link + '">点击前往</a>';
+            document.getElementById('publishBtn').disabled = true;
+        }
+
+        // ===== 加载余额 =====
+        function loadBalance() {
+            var session = app.getCurrentUser();
+            if (!session) {
+                document.getElementById('userBalance').textContent = '请先登录';
+                return;
+            }
+            axios.get(app.walletServerUrl + '/wallet/balance', {
+                params: { userId: session.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var balance = res.data.data.balance || 0;
+                    document.getElementById('userBalance').textContent = '¥' + parseFloat(balance).toFixed(2);
+                }
+            }).catch(function(err) {
+                console.error('加载余额失败:', err);
+            });
+        }
+
+        // ===== 加载高德地图 JS API =====
+        function loadAMap() {
+            if (typeof AMap !== 'undefined') {
+                isMapReady = true;
+                return;
+            }
+            var script = document.createElement('script');
+            script.src = 'https://webapi.amap.com/maps?v=2.0&key=8bdb8e93710c56a614e382cd16116c65&plugin=AMap.Geocoder,AMap.Geolocation';
+            script.onload = function() {
+                isMapReady = true;
+            };
+            script.onerror = function() {
+                console.error('高德地图加载失败');
+            };
+            document.head.appendChild(script);
+        }
+
+        // ===== 地图选点 =====
+        document.getElementById('pickupMapBtn').addEventListener('click', function() {
+            if (!isMapReady) {
+                app.showToast('地图加载中，请稍后再试');
+                return;
+            }
+            currentTarget = 'pickup';
+            document.getElementById('mapModalTitle').textContent = '📍 选择取件位置';
+            openMap();
+        });
+
+        document.getElementById('deliveryMapBtn').addEventListener('click', function() {
+            if (!isMapReady) {
+                app.showToast('地图加载中，请稍后再试');
+                return;
+            }
+            currentTarget = 'delivery';
+            document.getElementById('mapModalTitle').textContent = '📍 选择送件位置';
+            openMap();
+        });
+
+        document.getElementById('mapModalClose').addEventListener('click', closeMap);
+        document.getElementById('mapCancelBtn').addEventListener('click', closeMap);
+
+        document.getElementById('mapModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMap();
+            }
+        });
+
+        document.getElementById('mapConfirmBtn').addEventListener('click', function() {
+            if (!selectedAddress || !selectedLng || !selectedLat) {
+                app.showToast('请在地图上选择位置');
+                return;
+            }
+
+            var statusEl, locationInput, lngInput, latInput;
+
+            if (currentTarget === 'pickup') {
+                locationInput = document.getElementById('pickupLocation');
+                lngInput = document.getElementById('pickupLng');
+                latInput = document.getElementById('pickupLat');
+                statusEl = document.getElementById('pickupStatus');
+            } else if (currentTarget === 'delivery') {
+                locationInput = document.getElementById('deliveryLocation');
+                lngInput = document.getElementById('deliveryLng');
+                latInput = document.getElementById('deliveryLat');
+                statusEl = document.getElementById('deliveryStatus');
+            } else {
+                app.showToast('请先选择地址类型');
+                return;
+            }
+
+            locationInput.value = selectedAddress;
+            lngInput.value = selectedLng;
+            latInput.value = selectedLat;
+            statusEl.innerHTML = '<span class="success">✅ ' + selectedAddress + '</span>';
+
+            closeMap();
+            app.showToast('位置已选择');
+        });
+
+        // ===== 定位到我的位置 =====
+        document.getElementById('locateMeBtn').addEventListener('click', function() {
+            if (!map) {
+                app.showToast('地图未初始化');
+                return;
+            }
+
+            if (navigator.geolocation) {
+                app.showToast('正在定位...');
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        var lng = position.coords.longitude;
+                        var lat = position.coords.latitude;
+                        map.setCenter([lng, lat]);
+                        map.setZoom(17);
+
+                        if (marker) {
+                            map.remove(marker);
+                        }
+                        marker = new AMap.Marker({
+                            position: [lng, lat],
+                            map: map
+                        });
+                        reverseGeocode(lng, lat);
+                        app.showToast('已定位到您的位置');
+                    },
+                    function(error) {
+                        var msg = '定位失败';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                msg = '请允许浏览器访问位置权限';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                msg = '无法获取位置信息';
+                                break;
+                            case error.TIMEOUT:
+                                msg = '定位超时，请重试';
+                                break;
+                        }
+                        app.showToast(msg);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                app.showToast('您的浏览器不支持定位');
+            }
+        });
+
+        // ===== 打开地图 =====
+        function openMap() {
+            var modal = document.getElementById('mapModal');
+            modal.classList.add('active');
+
+            // 重置选择状态
+            selectedAddress = '';
+            selectedLng = null;
+            selectedLat = null;
+            document.getElementById('selectedAddress').textContent = '请在地图上点击选择';
+
+            // 延迟初始化地图，确保容器可见
+            setTimeout(function() {
+                initMap();
+            }, 300);
+        }
+
+        // ===== 关闭地图 =====
+        function closeMap() {
+            var modal = document.getElementById('mapModal');
+            modal.classList.remove('active');
+            if (map) {
+                map.destroy();
+                map = null;
+                marker = null;
+            }
+        }
+
+        // ===== 初始化地图（自动定位） =====
+        function initMap() {
+            if (map) {
+                map.destroy();
+                map = null;
+                marker = null;
+            }
+
+            // 默认中心：贵阳市花溪区大学城
+            var defaultCenter = [106.7, 26.6];
+
+            // 尝试获取用户当前位置
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        var lng = position.coords.longitude;
+                        var lat = position.coords.latitude;
+                        createMap([lng, lat]);
+
+                        // 在当前位置自动添加标记
+                        if (marker) {
+                            map.remove(marker);
+                        }
+                        marker = new AMap.Marker({
+                            position: [lng, lat],
+                            map: map
+                        });
+                        reverseGeocode(lng, lat);
+                    },
+                    function(error) {
+                        console.warn('定位失败，使用默认位置:', error.message);
+                        createMap(defaultCenter);
+                        app.showToast('定位失败，请手动选择位置');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 8000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                createMap(defaultCenter);
+                app.showToast('您的浏览器不支持定位，请手动选择位置');
+            }
+        }
+
+        // ===== 创建地图实例 =====
+        function createMap(center) {
+            map = new AMap.Map('mapContainer', {
+                zoom: 16,
+                center: center,
+                resizeEnable: true
+            });
+
+            // 地图点击事件
+            map.on('click', function(e) {
+                var lng = e.lnglat.getLng();
+                var lat = e.lnglat.getLat();
+                handleMapClick(lng, lat);
+            });
+
+            // 添加定位控件
+            AMap.plugin(['AMap.Geolocation'], function() {
+                var geolocation = new AMap.Geolocation({
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    buttonPosition: 'RB',
+                    buttonOffset: new AMap.Pixel(10, 20),
+                    zoomToAccuracy: true
+                });
+                map.addControl(geolocation);
+            });
+        }
+
+        // ===== 处理地图点击 =====
+        function handleMapClick(lng, lat) {
+            selectedLng = lng;
+            selectedLat = lat;
+
+            if (marker) {
+                map.remove(marker);
+            }
+            marker = new AMap.Marker({
+                position: [lng, lat],
+                map: map
+            });
+
+            reverseGeocode(lng, lat);
+        }
+
+        // ===== 逆地理编码 =====
+        function reverseGeocode(lng, lat) {
+            if (!geocoder) {
+                geocoder = new AMap.Geocoder({
+                    city: '贵阳',
+                    radius: 1000
+                });
+            }
+
+            geocoder.getAddress(new AMap.LngLat(lng, lat), function(status, result) {
+                if (status === 'complete' && result.info === 'OK') {
+                    var regeo = result.regeocode;
+                    var address = regeo.formattedAddress;
+                    if (!address || address === '') {
+                        var comp = regeo.addressComponent;
+                        address = (comp.province || '') + (comp.city || '') + (comp.district || '') + (comp.township || '') + (comp.street || '');
+                        if (!address || address === '') {
+                            address = '经度 ' + lng.toFixed(6) + '，纬度 ' + lat.toFixed(6);
+                        }
+                    }
+                    selectedAddress = address;
+                    document.getElementById('selectedAddress').textContent = address;
+                } else {
+                    selectedAddress = '经度 ' + lng.toFixed(6) + '，纬度 ' + lat.toFixed(6);
+                    document.getElementById('selectedAddress').textContent = selectedAddress;
+                }
+            });
+        }
+
+        // ===== 发布任务 =====
+        document.getElementById('publishBtn').addEventListener('click', function() {
+            var session = app.getCurrentUser();
+            if (!session) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1000);
+                return;
+            }
+
+            if (app.currentRole !== 1) {
+                app.showToast('只有普通用户才能发布任务');
+                return;
+            }
+
+            var title = document.getElementById('taskTitle').value.trim();
+            var description = document.getElementById('taskDesc').value.trim();
+            var rewardAmount = parseFloat(document.getElementById('rewardAmount').value);
+            var pickupLocation = document.getElementById('pickupLocation').value.trim();
+            var deliveryLocation = document.getElementById('deliveryLocation').value.trim();
+            var pickupLng = parseFloat(document.getElementById('pickupLng').value) || null;
+            var pickupLat = parseFloat(document.getElementById('pickupLat').value) || null;
+            var deliveryLng = parseFloat(document.getElementById('deliveryLng').value) || null;
+            var deliveryLat = parseFloat(document.getElementById('deliveryLat').value) || null;
+
+            if (!title) { app.showToast('请输入任务标题'); return; }
+            if (!description) { app.showToast('请输入任务描述'); return; }
+            if (!rewardAmount || rewardAmount <= 0) { app.showToast('请输入有效的酬劳金额'); return; }
+            if (!pickupLocation) { app.showToast('请选择取件地址'); return; }
+            if (!deliveryLocation) { app.showToast('请选择送件地址'); return; }
+
+            this.disabled = true;
+            this.textContent = '发布中...';
+
+            var data = {
+                title: title,
+                description: description,
+                rewardAmount: rewardAmount,
+                pickupLocation: pickupLocation,
+                pickupLng: pickupLng,
+                pickupLat: pickupLat,
+                deliveryLocation: deliveryLocation,
+                deliveryLng: deliveryLng,
+                deliveryLat: deliveryLat
+            };
+
+            var publisherName = app.getCookie('userName') || '用户';
+            try { publisherName = decodeURIComponent(publisherName); } catch(e) {}
+
+            axios.post(app.taskServerUrl + '/task/publish', data, {
+                params: {
+                    publisherId: session.userId,
+                    publisherName: publisherName,
+                    publisherAvatar: ''
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('任务发布成功！');
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    app.showToast(res.data.msg || '发布失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '发布失败，请重试');
+            }).finally(function() {
+                document.getElementById('publishBtn').disabled = false;
+                document.getElementById('publishBtn').textContent = '发布任务';
+            });
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            window.history.back();
+        });
+
+        // ===== 初始化 =====
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+
+</body>
+</html>

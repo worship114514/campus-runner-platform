@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>申请成为跑腿员 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .apply-page {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .apply-page .card {
+            margin-bottom: var(--space-4);
+        }
+        .apply-page .card-header .icon {
+            font-size: 1.5rem;
+        }
+        .info-box {
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            border-left: 3px solid var(--primary-500);
+        }
+        .info-box .title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+        }
+        .status-box {
+            text-align: center;
+            padding: var(--space-8) var(--space-4);
+        }
+        .status-box .icon {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: var(--space-4);
+        }
+        .status-box .status-title {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+        .status-box .status-desc {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .status-box .status-desc a {
+            color: var(--primary-500);
+            text-decoration: none;
+        }
+        .status-box .status-desc a:hover {
+            text-decoration: underline;
+        }
+        .status-pending .status-title { color: var(--warning-500); }
+        .status-approved .status-title { color: var(--success-500); }
+        .status-rejected .status-title { color: var(--error-500); }
+
+        .camera-preview {
+            width: 100%;
+            max-width: 320px;
+            height: 240px;
+            background: #1a1a2e;
+            border-radius: var(--radius-lg);
+            margin: 0 auto;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-sm);
+        }
+        .camera-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .camera-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .face-status {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            margin-top: var(--space-2);
+            text-align: center;
+        }
+        .face-status.success {
+            color: var(--success-500);
+        }
+        .face-status.error {
+            color: var(--error-500);
+        }
+        .camera-btn-group {
+            display: flex;
+            gap: var(--space-2);
+            justify-content: center;
+            margin-top: var(--space-3);
+            flex-wrap: wrap;
+        }
+        @media (max-width: 480px) {
+            .camera-preview {
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="apply-page" id="app">
+        <!-- 状态显示区域 -->
+        <div id="statusArea" style="display:none;">
+            <div class="card">
+                <div class="card-body" id="statusContent"></div>
+            </div>
+        </div>
+
+        <!-- 申请表单 -->
+        <div id="formArea">
+            <div class="card">
+                <div class="card-header">
+                    <span class="icon">🏍️</span>
+                    申请成为跑腿员
+                </div>
+                <div class="card-body">
+                    <div class="info-box">
+                        <div class="title">📋 申请须知</div>
+                        <ul style="margin: var(--space-2) 0 0 0; padding-left: var(--space-4);">
+                            <li>跑腿员需为在校学生，年满18周岁</li>
+                            <li>需提供真实姓名、身份证号进行实名认证</li>
+                            <li>需录入人脸进行身份验证</li>
+                            <li>申请提交后需等待管理员审核（1-3个工作日）</li>
+                            <li>审核通过后即可在平台接单赚取酬劳</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">真实姓名 <span style="color:var(--error-500);">*</span></label>
+                        <input type="text" id="realName" class="form-input" placeholder="请输入真实姓名">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">身份证号 <span style="color:var(--error-500);">*</span></label>
+                        <input type="text" id="idCard" class="form-input" placeholder="请输入18位身份证号">
+                        <div class="form-hint">仅用于实名认证，平台会严格保密</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">手机号 <span style="color:var(--error-500);">*</span></label>
+                        <input type="tel" id="phone" class="form-input" placeholder="请输入手机号" maxlength="11">
+                        <div class="form-hint">用于接收平台通知和联系</div>
+                    </div>
+
+                    <!-- 人脸录入 -->
+                    <div class="form-group">
+                        <label class="form-label">人脸录入 <span style="color:var(--error-500);">*</span></label>
+                        <div class="camera-wrapper" style="background:var(--neutral-50); border-radius:var(--radius-lg); padding:var(--space-4);">
+                            <div class="camera-preview" id="faceCameraPreview">
+                                <div style="text-align:center;">
+                                    <div style="font-size:2rem;">📷</div>
+                                    <div>点击下方按钮开启摄像头</div>
+                                </div>
+                            </div>
+                            <div class="camera-btn-group">
+                                <button class="btn btn-secondary btn-sm" id="openCameraBtn">📷 开启摄像头</button>
+                                <button class="btn btn-primary btn-sm" id="captureFaceBtn" disabled>📸 拍照录入</button>
+                            </div>
+                            <div class="face-status" id="faceStatus"></div>
+                            <input type="hidden" id="faceId" value="">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:var(--space-3); margin-top:var(--space-4);">
+                        <button class="btn btn-secondary" id="cancelBtn" style="flex:1;">取消</button>
+                        <button class="btn btn-primary" id="submitBtn" style="flex:2;">提交申请</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var faceStream = null;
+        var faceBase64 = null;
+        var isFaceCaptured = false;
+
+        // ===== DOM 引用 =====
+        var openCameraBtn = document.getElementById('openCameraBtn');
+        var captureFaceBtn = document.getElementById('captureFaceBtn');
+        var faceStatus = document.getElementById('faceStatus');
+        var cameraPreview = document.getElementById('faceCameraPreview');
+
+        // ===== 页面初始化 =====
+        function initPage() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+                return;
+            }
+
+            if (app.currentRole === 2) {
+                showStatus('approved', '您已经是跑腿员了', '可以在跑腿员中心接单赚钱 💰');
+                return;
+            }
+
+            checkApplicationStatus();
+
+            // 绑定摄像头按钮
+            if (openCameraBtn) {
+                openCameraBtn.addEventListener('click', openCamera);
+            }
+            if (captureFaceBtn) {
+                captureFaceBtn.addEventListener('click', captureFace);
+            }
+        }
+
+        // ===== 查询申请状态 =====
+        function checkApplicationStatus() {
+            axios.get(app.userServerUrl + '/passport/getRunnerStatus', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    if (data) {
+                        var statusMap = {
+                            1: { key: 'approved', title: '已通过 ✅', desc: '您已成为跑腿员，可以开始接单了' },
+                            2: { key: 'rejected', title: '已拒绝 ❌', desc: '您的申请未通过审核' },
+                            3: { key: 'pending', title: '审核中 ⏳', desc: '您的申请正在审核中，请耐心等待' }
+                        };
+                        var info = statusMap[data.status];
+                        if (info) {
+                            showStatus(info.key, info.title, info.desc, data.status === 2);
+                            return;
+                        }
+                    }
+                }
+                showForm();
+            }).catch(function(err) {
+                console.error('查询申请状态失败:', err);
+                showForm();
+            });
+        }
+
+        // ===== 显示状态 =====
+        function showStatus(type, title, desc, showReapply) {
+            document.getElementById('formArea').style.display = 'none';
+            document.getElementById('statusArea').style.display = 'block';
+
+            var iconMap = {
+                'pending': '⏳',
+                'approved': '✅',
+                'rejected': '❌'
+            };
+
+            var html = `
+                <div class="status-box status-${type}">
+                    <span class="icon">${iconMap[type] || '📋'}</span>
+                    <div class="status-title">${title}</div>
+                    <div class="status-desc">${desc}</div>
+                    <div style="margin-top:var(--space-4); display:flex; gap:var(--space-2); justify-content:center; flex-wrap:wrap;">
+            `;
+
+            if (type === 'approved') {
+                html += `
+                    <button class="btn btn-primary" onclick="switchToRunner()">🏍️ 切换为跑腿员</button>
+                    <a href="index.html"><button class="btn btn-secondary">返回首页</button></a>
+                `;
+            } else if (showReapply) {
+                html += `
+                    <button class="btn btn-primary" onclick="reapply()">重新申请</button>
+                    <a href="index.html"><button class="btn btn-secondary">返回首页</button></a>
+                `;
+            } else {
+                html += `
+                    <a href="index.html"><button class="btn btn-primary">返回首页</button></a>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('statusContent').innerHTML = html;
+
+            if (type === 'approved') {
+                app.currentRole = 2;
+                app.userInfo.userRole = 2;
+                app.setCookie('userRole', 2, 30);
+            }
+        }
+
+        // ===== 切换为跑腿员 =====
+        function switchToRunner() {
+            app.switchToRunner();
+        }
+
+        // ===== 重新申请 =====
+        function reapply() {
+            document.getElementById('statusArea').style.display = 'none';
+            document.getElementById('formArea').style.display = 'block';
+            document.getElementById('realName').value = '';
+            document.getElementById('idCard').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('faceId').value = '';
+            faceBase64 = null;
+            isFaceCaptured = false;
+            cameraPreview.innerHTML = `
+                <div style="text-align:center;">
+                    <div style="font-size:2rem;">📷</div>
+                    <div>点击下方按钮开启摄像头</div>
+                </div>
+            `;
+            faceStatus.textContent = '';
+            faceStatus.className = 'face-status';
+            captureFaceBtn.disabled = true;
+            openCameraBtn.textContent = '📷 开启摄像头';
+        }
+
+        // ===== 显示表单 =====
+        function showForm() {
+            document.getElementById('formArea').style.display = 'block';
+            document.getElementById('statusArea').style.display = 'none';
+        }
+
+        // ===== 开启摄像头 =====
+        function openCamera() {
+            if (faceStream) {
+                faceStream.getTracks().forEach(function(track) { track.stop(); });
+                faceStream = null;
+            }
+
+            // 如果已经拍过照，重置
+            if (isFaceCaptured) {
+                cameraPreview.innerHTML = `
+                    <div style="text-align:center;">
+                        <div style="font-size:2rem;">📷</div>
+                        <div>点击下方按钮开启摄像头</div>
+                    </div>
+                `;
+                isFaceCaptured = false;
+                captureFaceBtn.disabled = true;
+                faceBase64 = null;
+                document.getElementById('faceId').value = '';
+                faceStatus.textContent = '';
+                faceStatus.className = 'face-status';
+                openCameraBtn.textContent = '📷 开启摄像头';
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    faceStream = stream;
+                    var video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.autoplay = true;
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.objectFit = 'cover';
+                    cameraPreview.innerHTML = '';
+                    cameraPreview.appendChild(video);
+                    captureFaceBtn.disabled = false;
+                    faceStatus.textContent = '✅ 摄像头已开启，点击「拍照录入」采集人脸';
+                    faceStatus.className = 'face-status success';
+                })
+                .catch(function(err) {
+                    faceStatus.textContent = '❌ 无法访问摄像头，请检查权限';
+                    faceStatus.className = 'face-status error';
+                    app.showToast('无法访问摄像头');
+                });
+        }
+
+        // ===== 拍照录入 =====
+        function captureFace() {
+            var video = cameraPreview.querySelector('video');
+            if (!video) {
+                app.showToast('请先开启摄像头');
+                return;
+            }
+
+            var canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 400;
+            canvas.height = video.videoHeight || 300;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            faceBase64 = canvas.toDataURL('image/jpeg');
+
+            // 显示拍摄的照片
+            var img = document.createElement('img');
+            img.src = faceBase64;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            cameraPreview.innerHTML = '';
+            cameraPreview.appendChild(img);
+
+            // 关闭摄像头
+            if (faceStream) {
+                faceStream.getTracks().forEach(function(track) { track.stop(); });
+                faceStream = null;
+            }
+
+            isFaceCaptured = true;
+            captureFaceBtn.disabled = true;
+            openCameraBtn.textContent = '📷 重新拍摄';
+
+            faceStatus.textContent = '✅ 人脸录入成功，请提交申请';
+            faceStatus.className = 'face-status success';
+
+            app.showToast('人脸录入成功');
+        }
+
+        // ===== 提交申请 =====
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            var realName = document.getElementById('realName').value.trim();
+            var idCard = document.getElementById('idCard').value.trim();
+            var phone = document.getElementById('phone').value.trim();
+
+            if (!realName) { app.showToast('请输入真实姓名'); return; }
+            if (!idCard || !/^\d{15,18}$/.test(idCard)) { app.showToast('请输入正确的身份证号（15-18位）'); return; }
+            if (!phone || !/^1[3-9]\d{9}$/.test(phone)) { app.showToast('请输入正确的手机号'); return; }
+            if (!faceBase64) { app.showToast('请先录入人脸'); return; }
+
+            this.disabled = true;
+            this.textContent = '提交中...';
+
+            // 第一步：上传人脸到 GridFS
+            axios.post(app.filesServerUrl + '/fs/uploadFaceToGridFS', faceBase64, {
+                headers: { 'Content-Type': 'application/json' }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var faceId = res.data.data;
+                    document.getElementById('faceId').value = faceId;
+                    return submitApplication(realName, idCard, phone, faceId);
+                } else {
+                    app.showToast(res.data.msg || '人脸上传失败');
+                    throw new Error('人脸上传失败');
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('申请已提交，等待管理员审核');
+                    checkApplicationStatus();
+                } else {
+                    app.showToast(res.data.msg || '申请提交失败');
+                }
+            }).catch(function(err) {
+                if (err.message !== '人脸上传失败') {
+                    app.showToast('提交失败，请重试');
+                }
+            }).finally(function() {
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').textContent = '提交申请';
+            });
+        });
+
+        function submitApplication(realName, idCard, phone, faceId) {
+            return axios.post(app.userServerUrl + '/passport/applyRunner', null, {
+                params: {
+                    userId: user.userId,
+                    realName: realName,
+                    idCard: idCard,
+                    phone: phone,
+                    faceId: faceId
+                }
+            });
+        }
+
+        // ===== 取消 =====
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            window.history.back();
+        });
+
+        // ===== 页面加载完成时初始化 =====
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+
+</body>
+</html>

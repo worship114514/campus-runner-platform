@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>申请提现 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .withdraw-page {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .withdraw-page .card {
+            margin-bottom: var(--space-4);
+        }
+        .balance-display {
+            text-align: center;
+            padding: var(--space-4);
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-4);
+        }
+        .balance-display .amount {
+            font-size: var(--font-size-3xl);
+            font-weight: 700;
+            color: var(--primary-500);
+        }
+        .balance-display .label {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .info-box {
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            border-left: 3px solid var(--primary-500);
+        }
+        .info-box .title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: var(--font-size-sm);
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-row .label {
+            color: var(--text-secondary);
+        }
+        .info-row .value {
+            font-weight: 500;
+        }
+        .amount-input-wrapper {
+            position: relative;
+        }
+        .amount-input-wrapper .currency {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .amount-input-wrapper input {
+            padding-left: 32px;
+        }
+        .quick-amounts {
+            display: flex;
+            gap: var(--space-2);
+            margin-top: var(--space-2);
+            flex-wrap: wrap;
+        }
+        .quick-amounts .q-btn {
+            padding: var(--space-1) var(--space-3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+        .quick-amounts .q-btn:hover {
+            border-color: var(--primary-500);
+            color: var(--primary-500);
+        }
+        .quick-amounts .q-btn.active {
+            border-color: var(--primary-500);
+            background: var(--primary-500);
+            color: white;
+        }
+        .fee-info {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            margin-top: var(--space-2);
+            text-align: right;
+        }
+        .status-box {
+            text-align: center;
+            padding: var(--space-8) var(--space-4);
+        }
+        .status-box .icon {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: var(--space-4);
+        }
+        .status-box .status-title {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+        .status-box .status-desc {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .status-success .status-title { color: var(--success-500); }
+        .status-fail .status-title { color: var(--error-500); }
+        .status-pending .status-title { color: var(--warning-500); }
+        @media (max-width: 480px) {
+            .quick-amounts .q-btn {
+                flex: 1;
+                min-width: 60px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="withdraw-page" id="app">
+        <!-- 提现表单 -->
+        <div id="formArea">
+            <div class="card">
+                <div class="card-header">🏦 申请提现</div>
+                <div class="card-body">
+                    <div class="balance-display">
+                        <div class="label">💰 可提现余额</div>
+                        <div class="amount" id="availableBalance">¥0.00</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="title">📋 提现须知</div>
+                        <ul style="margin: var(--space-2) 0 0 0; padding-left: var(--space-4);">
+                            <li>单次提现最低 1 元，最高不超过可提现余额</li>
+                            <li>提现将通过支付宝转账，预计 1-3 个工作日到账</li>
+                            <li>平台暂不收取提现手续费</li>
+                            <li>请确保支付宝账号与真实姓名一致</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">提现金额 (元) <span style="color:var(--error-500);">*</span></label>
+                        <div class="amount-input-wrapper">
+                            <span class="currency">¥</span>
+                            <input type="number" id="amount" class="form-input" placeholder="0.00" min="1" step="0.5">
+                        </div>
+                        <div class="quick-amounts" id="quickAmounts">
+                            <button class="q-btn" data-amount="10">¥10</button>
+                            <button class="q-btn" data-amount="20">¥20</button>
+                            <button class="q-btn" data-amount="50">¥50</button>
+                            <button class="q-btn" data-amount="100">¥100</button>
+                        </div>
+                        <div class="fee-info" id="feeInfo">预计到账：¥0.00</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">支付宝账号 <span style="color:var(--error-500);">*</span></label>
+                        <input type="text" id="alipayAccount" class="form-input" placeholder="请输入支付宝绑定的手机号或邮箱">
+                        <div class="form-hint">请确保账号正确，否则无法到账</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">真实姓名 <span style="color:var(--error-500);">*</span></label>
+                        <input type="text" id="realName" class="form-input" placeholder="请输入与支付宝一致的姓名">
+                        <div class="form-hint">必须与支付宝实名认证姓名一致</div>
+                    </div>
+
+                    <div style="display:flex; gap:var(--space-3); margin-top:var(--space-4);">
+                        <button class="btn btn-secondary" id="cancelBtn" style="flex:1;">取消</button>
+                        <button class="btn btn-primary" id="submitBtn" style="flex:2;">提交提现申请</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提现结果 -->
+        <div id="resultArea" style="display:none;">
+            <div class="card">
+                <div class="card-body" id="resultContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var balance = 0;
+
+        // ===== 页面初始化 =====
+        function initPage() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+                return;
+            }
+
+            // 检查是否为跑腿员
+            if (app.currentRole !== 2) {
+                app.showToast('只有跑腿员才能提现');
+                setTimeout(function() { window.location.href = 'index.html'; }, 1500);
+                return;
+            }
+
+            loadBalance();
+
+            // 金额输入实时更新
+            document.getElementById('amount').addEventListener('input', function() {
+                updateFeeInfo();
+            });
+
+            // 快捷金额
+            document.querySelectorAll('#quickAmounts .q-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#quickAmounts .q-btn').forEach(function(b) {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    document.getElementById('amount').value = this.dataset.amount;
+                    updateFeeInfo();
+                });
+            });
+        }
+
+        // ===== 加载余额 =====
+        function loadBalance() {
+            axios.get(app.walletServerUrl + '/wallet/balance', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    balance = res.data.data.balance || 0;
+                    document.getElementById('availableBalance').textContent = '¥' + parseFloat(balance).toFixed(2);
+                }
+            }).catch(function(err) {
+                console.error('加载余额失败:', err);
+            });
+        }
+
+        // ===== 更新手续费信息 =====
+        function updateFeeInfo() {
+            var amount = parseFloat(document.getElementById('amount').value) || 0;
+            if (amount <= 0) {
+                document.getElementById('feeInfo').textContent = '请输入提现金额';
+                return;
+            }
+            if (amount > balance) {
+                document.getElementById('feeInfo').textContent = '⚠️ 金额超过可提现余额';
+                return;
+            }
+            document.getElementById('feeInfo').textContent = '预计到账：¥' + amount.toFixed(2) + '（免手续费）';
+        }
+
+        // ===== 提交提现 =====
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            var amount = parseFloat(document.getElementById('amount').value);
+            var alipayAccount = document.getElementById('alipayAccount').value.trim();
+            var realName = document.getElementById('realName').value.trim();
+
+            if (!amount || amount <= 0) {
+                app.showToast('请输入有效的提现金额');
+                return;
+            }
+            if (amount < 1) {
+                app.showToast('最低提现金额为 1 元');
+                return;
+            }
+            if (amount > balance) {
+                app.showToast('提现金额不能超过可用余额');
+                return;
+            }
+            if (!alipayAccount) {
+                app.showToast('请输入支付宝账号');
+                return;
+            }
+            if (!realName) {
+                app.showToast('请输入真实姓名');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '提交中...';
+
+            axios.post(app.walletServerUrl + '/wallet/withdraw', null, {
+                params: {
+                    userId: user.userId,
+                    amount: amount,
+                    alipayAccount: alipayAccount,
+                    realName: realName
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    if (data && data.status === 1) {
+                        showResult('success', '✅ 提现成功', '提现申请已提交，金额将在 1-3 个工作日内到账');
+                    } else {
+                        showResult('pending', '⏳ 处理中', '提现申请已提交，正在处理中');
+                    }
+                } else {
+                    showResult('fail', '❌ 提现失败', res.data.msg || '提现申请失败，请稍后重试');
+                }
+            }).catch(function(err) {
+                var msg = err.response && err.response.data ? err.response.data.msg : '提现失败，请重试';
+                showResult('fail', '❌ 提现失败', msg);
+            }).finally(function() {
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').textContent = '提交提现申请';
+            });
+        });
+
+        // ===== 显示结果 =====
+        function showResult(type, title, desc) {
+            document.getElementById('formArea').style.display = 'none';
+            document.getElementById('resultArea').style.display = 'block';
+
+            var html = `
+                <div class="status-box status-${type}">
+                    <span class="icon">${type === 'success' ? '✅' : type === 'pending' ? '⏳' : '❌'}</span>
+                    <div class="status-title">${title}</div>
+                    <div class="status-desc">${desc}</div>
+                    <div style="margin-top:var(--space-4); display:flex; gap:var(--space-2); justify-content:center;">
+                        <a href="wallet.html"><button class="btn btn-secondary">返回钱包</button></a>
+                        <a href="index.html"><button class="btn btn-primary">返回首页</button></a>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('resultContent').innerHTML = html;
+        }
+
+        // ===== 取消 =====
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            window.history.back();
+        });
+
+        // ===== 初始化 =====
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+
+</body>
+</html>

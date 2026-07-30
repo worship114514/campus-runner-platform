@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .profile-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: var(--space-6);
+        }
+        .profile-sidebar .avatar-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            margin: 0 auto var(--space-4);
+            display: flex;
+            justify-content: center;
+        }
+        .profile-sidebar .avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            cursor: pointer;
+            overflow: hidden;
+            border: 3px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        .profile-sidebar .avatar-large:hover {
+            border-color: var(--primary-500);
+            opacity: 0.9;
+        }
+        .profile-sidebar .avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-sidebar .avatar-edit-icon {
+            position: absolute;
+            bottom: 5px;
+            right: 15px;
+            background: var(--primary-500);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid white;
+            transition: all 0.3s;
+        }
+        .profile-sidebar .avatar-edit-icon:hover {
+            transform: scale(1.1);
+        }
+        .profile-sidebar .name {
+            text-align: center;
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+        }
+        .profile-sidebar .role {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+        }
+        .profile-sidebar .menu {
+            margin-top: var(--space-4);
+            list-style: none;
+        }
+        .profile-sidebar .menu li {
+            padding: var(--space-3) var(--space-4);
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        .profile-sidebar .menu li:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .profile-sidebar .menu li.active {
+            border-left-color: var(--primary-500);
+            background: var(--bg-hover);
+            color: var(--primary-500);
+            font-weight: 500;
+        }
+        .profile-content .tab-panel {
+            display: none;
+        }
+        .profile-content .tab-panel.active {
+            display: block;
+        }
+        .info-row {
+            display: flex;
+            padding: var(--space-3) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .info-row .label {
+            width: 100px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .info-row .value {
+            flex: 1;
+            color: var(--text-primary);
+        }
+        .info-row .edit-btn {
+            color: var(--primary-500);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            margin-left: var(--space-2);
+        }
+        .info-row .edit-btn:hover {
+            text-decoration: underline;
+        }
+        .upload-progress {
+            display: none;
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: var(--space-2);
+        }
+        .editable-input {
+            width: 100%;
+            max-width: 300px;
+            padding: var(--space-1) var(--space-2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+        }
+        .editable-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+        }
+        .edit-mode-indicator {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            margin-left: var(--space-2);
+        }
+        .region-select-row {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        .region-select-row select {
+            padding: var(--space-1) var(--space-2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+            min-width: 100px;
+        }
+        .region-select-row select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+        }
+
+        /* 模态框样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-6);
+            max-width: 420px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-box h3 {
+            margin-bottom: var(--space-4);
+        }
+        .modal-box .btn-group {
+            display: flex;
+            gap: var(--space-3);
+            margin-top: var(--space-4);
+        }
+        .modal-box .btn-group button {
+            flex: 1;
+        }
+        .code-input-group {
+            display: flex;
+            gap: var(--space-2);
+        }
+        .code-input-group input {
+            flex: 1;
+        }
+        .code-input-group button {
+            white-space: nowrap;
+        }
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            .profile-sidebar .menu {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--space-1);
+            }
+            .profile-sidebar .menu li {
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                padding: var(--space-2) var(--space-3);
+            }
+            .profile-sidebar .menu li.active {
+                border-left: none;
+                border-bottom-color: var(--primary-500);
+            }
+            .info-row {
+                flex-direction: column;
+                gap: var(--space-1);
+            }
+            .info-row .label {
+                width: auto;
+            }
+            .editable-input {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="profile-page">
+        <div class="profile-grid">
+            <!-- 侧边栏 -->
+            <div class="card profile-sidebar">
+                <div class="card-body">
+                    <div class="avatar-wrapper">
+                        <div class="avatar-large" id="avatarDisplay" onclick="document.getElementById('avatarInput').click()">
+                            ?
+                        </div>
+                        <div class="avatar-edit-icon" onclick="document.getElementById('avatarInput').click()">
+                            <span>📷</span>
+                        </div>
+                        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+                    </div>
+                    <div id="uploadProgress" class="upload-progress">上传中...</div>
+                    <div class="name" id="userName">用户</div>
+                    <div class="role" id="userRole">普通用户</div>
+                    <ul class="menu" id="profileMenu">
+                        <li class="active" data-tab="info">📋 个人信息</li>
+                        <li data-tab="orders">📦 我的订单</li>
+                        <li data-tab="evaluations">⭐ 我的评价</li>
+                        <li data-tab="security">🔒 安全设置</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 内容 -->
+            <div class="card profile-content">
+                <div class="card-body">
+
+                    <!-- 个人信息 -->
+                    <div class="tab-panel active" id="tab-info">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+                            <h3 style="margin:0;">个人信息</h3>
+                            <button class="btn btn-primary btn-sm" id="editInfoBtn">✏️ 编辑</button>
+                        </div>
+                        <div id="userInfo"></div>
+                        <div id="editInfoArea" style="display:none;margin-top:var(--space-4);">
+                            <button class="btn btn-primary" id="saveProfileBtn">💾 保存修改</button>
+                            <button class="btn btn-secondary" id="cancelEditBtn">取消</button>
+                        </div>
+                    </div>
+
+                    <!-- 我的订单 -->
+                    <div class="tab-panel" id="tab-orders">
+                        <h3 style="margin-bottom:var(--space-4);">我的订单</h3>
+                        <div id="orderList"></div>
+                    </div>
+
+                    <!-- 我的评价 -->
+                    <div class="tab-panel" id="tab-evaluations">
+                        <h3 style="margin-bottom:var(--space-4);">我的评价</h3>
+                        <div id="evalList"></div>
+                    </div>
+
+                    <!-- 安全设置 -->
+                    <div class="tab-panel" id="tab-security">
+                        <h3 style="margin-bottom:var(--space-4);">安全设置</h3>
+                        <div class="info-row">
+                            <div class="label">修改密码</div>
+                            <div class="value"><button class="btn btn-secondary btn-sm" id="changePwdBtn">修改密码</button></div>
+                        </div>
+                        <div class="info-row" id="mobileRow">
+                            <div class="label">绑定手机</div>
+                            <div class="value" id="mobileDisplay">
+                                <span id="currentMobile">未绑定</span>
+                                <button class="btn btn-secondary btn-sm" id="changeMobileBtn" style="margin-left:var(--space-2);">修改</button>
+                            </div>
+                        </div>
+                        <div class="info-row" id="runnerStatusRow">
+                            <div class="label">跑腿员状态</div>
+                            <div class="value" id="runnerStatusDisplay"></div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">注销账号</div>
+                            <div class="value"><button class="btn btn-danger btn-sm" id="deleteAccountBtn">注销账号</button></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 修改手机号模态框 ===== -->
+    <div class="modal-overlay" id="changeMobileModal">
+        <div class="modal-box">
+            <h3>📱 修改手机号</h3>
+            <div class="form-group">
+                <label class="form-label">新手机号</label>
+                <input type="tel" id="newMobile" class="form-input" placeholder="请输入新手机号" maxlength="11">
+            </div>
+            <div class="form-group">
+                <label class="form-label">验证码</label>
+                <div class="code-input-group">
+                    <input type="text" id="smsCode" class="form-input" placeholder="请输入验证码" maxlength="6">
+                    <button class="btn btn-secondary btn-sm" id="getCodeBtn">获取验证码</button>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="closeModalBtn">取消</button>
+                <button class="btn btn-primary" id="confirmChangeMobileBtn">确认修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 修改密码模态框 ===== -->
+    <div class="modal-overlay" id="changePwdModal">
+        <div class="modal-box">
+            <h3>🔒 修改密码</h3>
+            <div class="form-group">
+                <label class="form-label">当前密码</label>
+                <input type="password" id="oldPassword" class="form-input" placeholder="请输入当前密码">
+            </div>
+            <div class="form-group">
+                <label class="form-label">新密码</label>
+                <input type="password" id="newPassword" class="form-input" placeholder="请输入新密码（至少6位）">
+            </div>
+            <div class="form-group">
+                <label class="form-label">确认新密码</label>
+                <input type="password" id="confirmPassword" class="form-input" placeholder="请再次输入新密码">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="closePwdModalBtn">取消</button>
+                <button class="btn btn-primary" id="confirmChangePwdBtn">确认修改</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+        var currentTab = 'info';
+        var userData = null;
+        var isEditing = false;
+        var changeMobileTimer = null;
+        var changeMobileCountdown = 0;
+
+        // ===== 页面初始化 =====
+        function initPage() {
+            if (!user) {
+                app.showToast('请先登录');
+                setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+                return;
+            }
+            loadUserInfo();
+            loadOrders();
+            loadEvaluations();
+            loadRunnerStatus();
+            loadMobile();
+        }
+
+        // ===== 切换Tab =====
+        document.querySelectorAll('#profileMenu li').forEach(function(item) {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('#profileMenu li').forEach(function(l) {
+                    l.classList.remove('active');
+                });
+                this.classList.add('active');
+                var tab = this.dataset.tab;
+                currentTab = tab;
+                document.querySelectorAll('.tab-panel').forEach(function(p) {
+                    p.classList.remove('active');
+                });
+                document.getElementById('tab-' + tab).classList.add('active');
+                if (tab === 'info') loadUserInfo();
+                if (tab === 'orders') loadOrders();
+                if (tab === 'evaluations') loadEvaluations();
+                if (tab === 'security') {
+                    loadRunnerStatus();
+                    loadMobile();
+                }
+            });
+        });
+
+        // ===== 加载用户信息 =====
+        function loadUserInfo() {
+            if (!user) return;
+
+            axios.post(app.userServerUrl + '/user/getUserInfo', null, {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    userData = res.data.data;
+                    renderUserInfo(userData);
+                    renderAvatar(userData);
+                }
+            }).catch(function(err) {
+                console.error('加载用户信息失败:', err);
+                app.showToast('加载用户信息失败');
+            });
+        }
+
+        function renderUserInfo(data) {
+            var roleMap = { 1: '普通用户', 2: '跑腿员', 3: '管理员' };
+            var statusMap = { 1: '正常', 2: '已冻结', 3: '审核中' };
+            var sexMap = { 0: '保密', 1: '男', 2: '女' };
+
+            document.getElementById('userName').textContent = data.nickname || data.username || '用户';
+            document.getElementById('userRole').textContent = roleMap[data.userRole] || '普通用户';
+
+            var displayHtml = '';
+            var editHtml = '';
+
+            if (!isEditing) {
+                displayHtml = `
+                    <div class="info-row">
+                        <div class="label">昵称</div>
+                        <div class="value">${data.nickname || ''}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">手机号</div>
+                        <div class="value">${data.mobile || ''}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">真实姓名</div>
+                        <div class="value">${data.realname || '未设置'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">性别</div>
+                        <div class="value">${sexMap[data.sex] || '保密'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">邮箱</div>
+                        <div class="value">${data.email || '未设置'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">所在地区</div>
+                        <div class="value">${data.province || ''} ${data.city || ''} ${data.district || ''}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">生日</div>
+                        <div class="value">${data.birthday || '未设置'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">用户状态</div>
+                        <div class="value">${statusMap[data.activeStatus] || '未知'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">注册时间</div>
+                        <div class="value">${app.formatDateTime(new Date(data.createdTime).getTime())}</div>
+                    </div>
+                `;
+            } else {
+                editHtml = `
+                    <div class="info-row">
+                        <div class="label">昵称</div>
+                        <div class="value">
+                            <input type="text" id="editNickname" class="editable-input" value="${data.nickname || ''}" placeholder="请输入昵称">
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">手机号</div>
+                        <div class="value">${data.mobile || ''} <span class="edit-mode-indicator">（手机号修改请在「安全设置」中操作）</span></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">真实姓名</div>
+                        <div class="value">
+                            <input type="text" id="editRealname" class="editable-input" value="${data.realname || ''}" placeholder="请输入真实姓名">
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">性别</div>
+                        <div class="value">
+                            <select id="editSex" class="editable-input">
+                                <option value="0" ${data.sex === 0 ? 'selected' : ''}>保密</option>
+                                <option value="1" ${data.sex === 1 ? 'selected' : ''}>男</option>
+                                <option value="2" ${data.sex === 2 ? 'selected' : ''}>女</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">邮箱</div>
+                        <div class="value">
+                            <input type="email" id="editEmail" class="editable-input" value="${data.email || ''}" placeholder="请输入邮箱">
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">所在地区</div>
+                        <div class="value">
+                            <div class="region-select-row">
+                                <select id="editProvince">
+                                    <option value="">省份</option>
+                                    <option value="北京市" ${data.province === '北京市' ? 'selected' : ''}>北京市</option>
+                                    <option value="上海市" ${data.province === '上海市' ? 'selected' : ''}>上海市</option>
+                                    <option value="天津市" ${data.province === '天津市' ? 'selected' : ''}>天津市</option>
+                                    <option value="重庆市" ${data.province === '重庆市' ? 'selected' : ''}>重庆市</option>
+                                    <option value="河北省" ${data.province === '河北省' ? 'selected' : ''}>河北省</option>
+                                    <option value="山西省" ${data.province === '山西省' ? 'selected' : ''}>山西省</option>
+                                    <option value="辽宁省" ${data.province === '辽宁省' ? 'selected' : ''}>辽宁省</option>
+                                    <option value="吉林省" ${data.province === '吉林省' ? 'selected' : ''}>吉林省</option>
+                                    <option value="黑龙江省" ${data.province === '黑龙江省' ? 'selected' : ''}>黑龙江省</option>
+                                    <option value="江苏省" ${data.province === '江苏省' ? 'selected' : ''}>江苏省</option>
+                                    <option value="浙江省" ${data.province === '浙江省' ? 'selected' : ''}>浙江省</option>
+                                    <option value="安徽省" ${data.province === '安徽省' ? 'selected' : ''}>安徽省</option>
+                                    <option value="福建省" ${data.province === '福建省' ? 'selected' : ''}>福建省</option>
+                                    <option value="江西省" ${data.province === '江西省' ? 'selected' : ''}>江西省</option>
+                                    <option value="山东省" ${data.province === '山东省' ? 'selected' : ''}>山东省</option>
+                                    <option value="河南省" ${data.province === '河南省' ? 'selected' : ''}>河南省</option>
+                                    <option value="湖北省" ${data.province === '湖北省' ? 'selected' : ''}>湖北省</option>
+                                    <option value="湖南省" ${data.province === '湖南省' ? 'selected' : ''}>湖南省</option>
+                                    <option value="广东省" ${data.province === '广东省' ? 'selected' : ''}>广东省</option>
+                                    <option value="海南省" ${data.province === '海南省' ? 'selected' : ''}>海南省</option>
+                                    <option value="四川省" ${data.province === '四川省' ? 'selected' : ''}>四川省</option>
+                                    <option value="贵州省" ${data.province === '贵州省' ? 'selected' : ''}>贵州省</option>
+                                    <option value="云南省" ${data.province === '云南省' ? 'selected' : ''}>云南省</option>
+                                    <option value="陕西省" ${data.province === '陕西省' ? 'selected' : ''}>陕西省</option>
+                                    <option value="甘肃省" ${data.province === '甘肃省' ? 'selected' : ''}>甘肃省</option>
+                                    <option value="青海省" ${data.province === '青海省' ? 'selected' : ''}>青海省</option>
+                                    <option value="台湾省" ${data.province === '台湾省' ? 'selected' : ''}>台湾省</option>
+                                    <option value="内蒙古自治区" ${data.province === '内蒙古自治区' ? 'selected' : ''}>内蒙古自治区</option>
+                                    <option value="广西壮族自治区" ${data.province === '广西壮族自治区' ? 'selected' : ''}>广西壮族自治区</option>
+                                    <option value="西藏自治区" ${data.province === '西藏自治区' ? 'selected' : ''}>西藏自治区</option>
+                                    <option value="宁夏回族自治区" ${data.province === '宁夏回族自治区' ? 'selected' : ''}>宁夏回族自治区</option>
+                                    <option value="新疆维吾尔自治区" ${data.province === '新疆维吾尔自治区' ? 'selected' : ''}>新疆维吾尔自治区</option>
+                                    <option value="香港特别行政区" ${data.province === '香港特别行政区' ? 'selected' : ''}>香港特别行政区</option>
+                                    <option value="澳门特别行政区" ${data.province === '澳门特别行政区' ? 'selected' : ''}>澳门特别行政区</option>
+                                </select>
+                                <select id="editCity">
+                                    <option value="">城市</option>
+                                    <option value="贵阳市" ${data.city === '贵阳市' ? 'selected' : ''}>贵阳市</option>
+                                    <option value="遵义市" ${data.city === '遵义市' ? 'selected' : ''}>遵义市</option>
+                                    <option value="安顺市" ${data.city === '安顺市' ? 'selected' : ''}>安顺市</option>
+                                    <option value="六盘水市" ${data.city === '六盘水市' ? 'selected' : ''}>六盘水市</option>
+                                    <option value="北京市" ${data.city === '北京市' ? 'selected' : ''}>北京市</option>
+                                    <option value="上海市" ${data.city === '上海市' ? 'selected' : ''}>上海市</option>
+                                    <option value="广州市" ${data.city === '广州市' ? 'selected' : ''}>广州市</option>
+                                    <option value="深圳市" ${data.city === '深圳市' ? 'selected' : ''}>深圳市</option>
+                                    <option value="成都市" ${data.city === '成都市' ? 'selected' : ''}>成都市</option>
+                                    <option value="重庆市" ${data.city === '重庆市' ? 'selected' : ''}>重庆市</option>
+                                    <option value="南京市" ${data.city === '南京市' ? 'selected' : ''}>南京市</option>
+                                    <option value="武汉市" ${data.city === '武汉市' ? 'selected' : ''}>武汉市</option>
+                                    <option value="西安市" ${data.city === '西安市' ? 'selected' : ''}>西安市</option>
+                                    <option value="杭州市" ${data.city === '杭州市' ? 'selected' : ''}>杭州市</option>
+                                    <option value="昆明市" ${data.city === '昆明市' ? 'selected' : ''}>昆明市</option>
+                                    <option value="长沙市" ${data.city === '长沙市' ? 'selected' : ''}>长沙市</option>
+                                    <option value="郑州市" ${data.city === '郑州市' ? 'selected' : ''}>郑州市</option>
+                                    <option value="沈阳市" ${data.city === '沈阳市' ? 'selected' : ''}>沈阳市</option>
+                                    <option value="长春市" ${data.city === '长春市' ? 'selected' : ''}>长春市</option>
+                                    <option value="哈尔滨市" ${data.city === '哈尔滨市' ? 'selected' : ''}>哈尔滨市</option>
+                                    <option value="石家庄市" ${data.city === '石家庄市' ? 'selected' : ''}>石家庄市</option>
+                                    <option value="太原市" ${data.city === '太原市' ? 'selected' : ''}>太原市</option>
+                                    <option value="呼和浩特市" ${data.city === '呼和浩特市' ? 'selected' : ''}>呼和浩特市</option>
+                                    <option value="南宁市" ${data.city === '南宁市' ? 'selected' : ''}>南宁市</option>
+                                    <option value="海口市" ${data.city === '海口市' ? 'selected' : ''}>海口市</option>
+                                    <option value="兰州市" ${data.city === '兰州市' ? 'selected' : ''}>兰州市</option>
+                                    <option value="西宁市" ${data.city === '西宁市' ? 'selected' : ''}>西宁市</option>
+                                    <option value="银川市" ${data.city === '银川市' ? 'selected' : ''}>银川市</option>
+                                    <option value="乌鲁木齐市" ${data.city === '乌鲁木齐市' ? 'selected' : ''}>乌鲁木齐市</option>
+                                </select>
+                                <select id="editDistrict">
+                                    <option value="">区/县</option>
+                                    <option value="花溪区" ${data.district === '花溪区' ? 'selected' : ''}>花溪区</option>
+                                    <option value="南明区" ${data.district === '南明区' ? 'selected' : ''}>南明区</option>
+                                    <option value="云岩区" ${data.district === '云岩区' ? 'selected' : ''}>云岩区</option>
+                                    <option value="观山湖区" ${data.district === '观山湖区' ? 'selected' : ''}>观山湖区</option>
+                                    <option value="白云区" ${data.district === '白云区' ? 'selected' : ''}>白云区</option>
+                                    <option value="乌当区" ${data.district === '乌当区' ? 'selected' : ''}>乌当区</option>
+                                    <option value="其他" ${data.district === '其他' ? 'selected' : ''}>其他</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">生日</div>
+                        <div class="value">
+                            <input type="date" id="editBirthday" class="editable-input" value="${data.birthday || ''}">
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('userInfo').innerHTML = isEditing ? editHtml : displayHtml;
+            document.getElementById('editInfoArea').style.display = isEditing ? 'block' : 'none';
+            document.getElementById('editInfoBtn').style.display = isEditing ? 'none' : 'inline-block';
+        }
+
+        function renderAvatar(data) {
+            var avatar = document.getElementById('avatarDisplay');
+            if (data.face && data.face !== 'null' && data.face !== 'undefined' && data.face !== '') {
+                avatar.innerHTML = `<img src="${data.face}" alt="头像">`;
+            } else {
+                var initial = (data.nickname || data.username || '用').charAt(0).toUpperCase();
+                avatar.innerHTML = initial;
+                avatar.style.background = 'var(--primary-500)';
+            }
+            if (data.face && data.face !== 'null') {
+                app.setCookie('userAvatar', data.face, 30);
+            }
+        }
+
+        // ===== 加载手机号 =====
+        function loadMobile() {
+            if (!user || !userData) return;
+            var mobile = userData.mobile || '未绑定';
+            document.getElementById('currentMobile').textContent = mobile;
+        }
+
+        // ===== 头像上传 =====
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                app.showToast('请选择图片文件');
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                app.showToast('图片大小不能超过2MB');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            var progressEl = document.getElementById('uploadProgress');
+            progressEl.style.display = 'block';
+            progressEl.textContent = '上传中...';
+
+            axios.post(app.filesServerUrl + '/fs/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }).then(function(res) {
+                progressEl.textContent = '上传成功，更新中...';
+                if (res.data && res.data.status === 200) {
+                    var avatarUrl = res.data.data;
+                    updateUserAvatar(avatarUrl);
+                } else {
+                    app.showToast(res.data.msg || '上传失败');
+                    progressEl.style.display = 'none';
+                }
+            }).catch(function(err) {
+                app.showToast('上传失败，请重试');
+                progressEl.style.display = 'none';
+                console.error('头像上传失败:', err);
+            });
+        });
+
+        function updateUserAvatar(avatarUrl) {
+            var userId = app.getCookie('uid');
+            var user = app.userInfo;
+            if (!user || !user.id) {
+                user = {
+                    id: userId,
+                    nickname: app.getCookie('userName') || '用户',
+                    face: avatarUrl
+                };
+            }
+
+            var updateData = {
+                id: user.id,
+                nickname: user.nickname || '用户',
+                face: avatarUrl,
+                realname: user.realname || '未设置',
+                email: user.email || 'default@example.com',
+                sex: (user.sex !== null && user.sex !== undefined) ? user.sex : 2,
+                birthday: user.birthday || null,
+                province: user.province || null,
+                city: user.city || null,
+                district: user.district || null
+            };
+            // 移除空值字段
+            for (var key in updateData) {
+                if (updateData[key] === null || updateData[key] === undefined) {
+                    delete updateData[key];
+                }
+            }
+
+            axios.post(app.userServerUrl + '/user/updateUserInfo', updateData)
+                .then(function(res) {
+                    document.getElementById('uploadProgress').style.display = 'none';
+                    if (res && res.data && res.data.status === 200) {
+                        app.setCookie('userAvatar', avatarUrl, 30);
+                        app.showToast('头像更新成功');
+                        app.loadUserInfo().then(function() {
+                            loadUserInfo();
+                        });
+                    } else {
+                        app.showToast(res.data.msg || '更新失败');
+                    }
+                })
+                .catch(function(err) {
+                    document.getElementById('uploadProgress').style.display = 'none';
+                    console.error('更新头像失败:', err);
+                    app.showToast('更新失败，请重试');
+                });
+        }
+
+        // ===== 编辑模式切换 =====
+        document.getElementById('editInfoBtn').addEventListener('click', function() {
+            isEditing = true;
+            loadUserInfo();
+        });
+
+        document.getElementById('cancelEditBtn').addEventListener('click', function() {
+            isEditing = false;
+            loadUserInfo();
+        });
+
+        // ===== 保存个人信息 =====
+        document.getElementById('saveProfileBtn').addEventListener('click', function() {
+            if (!userData) return;
+
+            var updateData = {
+                id: userData.id,
+                nickname: document.getElementById('editNickname').value.trim() || userData.nickname,
+                realname: document.getElementById('editRealname').value.trim() || userData.realname,
+                sex: parseInt(document.getElementById('editSex').value) || 0,
+                email: document.getElementById('editEmail').value.trim() || userData.email,
+                province: document.getElementById('editProvince').value || userData.province,
+                city: document.getElementById('editCity').value || userData.city,
+                district: document.getElementById('editDistrict').value || userData.district,
+                birthday: document.getElementById('editBirthday').value || userData.birthday
+            };
+
+            // 移除空值
+            for (var key in updateData) {
+                if (updateData[key] === '' || updateData[key] === null || updateData[key] === undefined) {
+                    delete updateData[key];
+                }
+            }
+            // 确保 id 和 nickname 存在
+            if (!updateData.id) {
+                app.showToast('用户信息异常');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '保存中...';
+
+            axios.post(app.userServerUrl + '/user/updateUserInfo', updateData)
+                .then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        app.showToast('保存成功');
+                        isEditing = false;
+                        app.loadUserInfo().then(function() {
+                            loadUserInfo();
+                        });
+                    } else {
+                        app.showToast(res.data.msg || '保存失败');
+                    }
+                })
+                .catch(function(err) {
+                    app.showToast('保存失败，请重试');
+                })
+                .finally(function() {
+                    document.getElementById('saveProfileBtn').disabled = false;
+                    document.getElementById('saveProfileBtn').textContent = '💾 保存修改';
+                });
+        });
+
+        // ===== 修改手机号 =====
+        document.getElementById('changeMobileBtn').addEventListener('click', function() {
+            document.getElementById('changeMobileModal').classList.add('active');
+            document.getElementById('newMobile').value = '';
+            document.getElementById('smsCode').value = '';
+            document.getElementById('getCodeBtn').disabled = false;
+            document.getElementById('getCodeBtn').textContent = '获取验证码';
+            if (changeMobileTimer) {
+                clearInterval(changeMobileTimer);
+                changeMobileTimer = null;
+            }
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', function() {
+            document.getElementById('changeMobileModal').classList.remove('active');
+            if (changeMobileTimer) {
+                clearInterval(changeMobileTimer);
+                changeMobileTimer = null;
+            }
+        });
+
+        document.getElementById('changeMobileModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                if (changeMobileTimer) {
+                    clearInterval(changeMobileTimer);
+                    changeMobileTimer = null;
+                }
+            }
+        });
+
+        document.getElementById('getCodeBtn').addEventListener('click', function() {
+            var newMobile = document.getElementById('newMobile').value.trim();
+            if (!newMobile) {
+                app.showToast('请输入新手机号');
+                return;
+            }
+            if (!/^1[3-9]\d{9}$/.test(newMobile)) {
+                app.showToast('请输入正确的手机号');
+                return;
+            }
+
+            var userId = app.getCookie('uid');
+            if (!userId) {
+                app.showToast('请先登录');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '发送中...';
+
+            axios.get(app.userServerUrl + '/passport/sendChangeMobileCode', {
+                params: { userId: userId, newMobile: newMobile }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('验证码已发送');
+                    changeMobileCountdown = 60;
+                    document.getElementById('getCodeBtn').textContent = changeMobileCountdown + 's';
+                    if (changeMobileTimer) {
+                        clearInterval(changeMobileTimer);
+                    }
+                    changeMobileTimer = setInterval(function() {
+                        changeMobileCountdown--;
+                        if (changeMobileCountdown <= 0) {
+                            clearInterval(changeMobileTimer);
+                            changeMobileTimer = null;
+                            document.getElementById('getCodeBtn').disabled = false;
+                            document.getElementById('getCodeBtn').textContent = '获取验证码';
+                        } else {
+                            document.getElementById('getCodeBtn').textContent = changeMobileCountdown + 's';
+                        }
+                    }, 1000);
+                } else {
+                    app.showToast(res.data.msg || '发送失败');
+                    document.getElementById('getCodeBtn').disabled = false;
+                    document.getElementById('getCodeBtn').textContent = '获取验证码';
+                }
+            }).catch(function(err) {
+                app.showToast('发送失败，请重试');
+                document.getElementById('getCodeBtn').disabled = false;
+                document.getElementById('getCodeBtn').textContent = '获取验证码';
+            });
+        });
+
+        document.getElementById('confirmChangeMobileBtn').addEventListener('click', function() {
+            var newMobile = document.getElementById('newMobile').value.trim();
+            var smsCode = document.getElementById('smsCode').value.trim();
+            var userId = app.getCookie('uid');
+
+            if (!newMobile) {
+                app.showToast('请输入新手机号');
+                return;
+            }
+            if (!/^1[3-9]\d{9}$/.test(newMobile)) {
+                app.showToast('请输入正确的手机号');
+                return;
+            }
+            if (!smsCode || smsCode.length !== 6) {
+                app.showToast('请输入6位验证码');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '提交中...';
+
+            axios.post(app.userServerUrl + '/passport/confirmChangeMobile', null, {
+                params: {
+                    userId: userId,
+                    newMobile: newMobile,
+                    smsCode: smsCode
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('手机号修改成功，请重新登录');
+                    document.getElementById('changeMobileModal').classList.remove('active');
+                    setTimeout(function() {
+                        app.logout();
+                    }, 1500);
+                } else {
+                    app.showToast(res.data.msg || '修改失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.response ? err.response.data.msg : '修改失败，请重试');
+            }).finally(function() {
+                document.getElementById('confirmChangeMobileBtn').disabled = false;
+                document.getElementById('confirmChangeMobileBtn').textContent = '确认修改';
+            });
+        });
+
+        // ===== 修改密码 =====
+        document.getElementById('changePwdBtn').addEventListener('click', function() {
+            document.getElementById('changePwdModal').classList.add('active');
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        });
+
+        document.getElementById('closePwdModalBtn').addEventListener('click', function() {
+            document.getElementById('changePwdModal').classList.remove('active');
+        });
+
+        document.getElementById('changePwdModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+
+        document.getElementById('confirmChangePwdBtn').addEventListener('click', function() {
+            var oldPassword = document.getElementById('oldPassword').value.trim();
+            var newPassword = document.getElementById('newPassword').value.trim();
+            var confirmPassword = document.getElementById('confirmPassword').value.trim();
+            var userId = app.getCookie('uid');
+
+            if (!oldPassword) {
+                app.showToast('请输入当前密码');
+                return;
+            }
+            if (!newPassword || newPassword.length < 6) {
+                app.showToast('新密码至少6位');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                app.showToast('两次输入的密码不一致');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '提交中...';
+
+            axios.post(app.userServerUrl + '/passport/changePassword', null, {
+                params: {
+                    userId: userId,
+                    oldPassword: oldPassword,
+                    newPassword: newPassword
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('密码修改成功，请重新登录');
+                    document.getElementById('changePwdModal').classList.remove('active');
+                    setTimeout(function() {
+                        app.logout();
+                    }, 1500);
+                } else {
+                    app.showToast(res.data.msg || '修改失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.response ? err.response.data.msg : '修改失败，请重试');
+            }).finally(function() {
+                document.getElementById('confirmChangePwdBtn').disabled = false;
+                document.getElementById('confirmChangePwdBtn').textContent = '确认修改';
+            });
+        });
+
+        // ===== 加载订单 =====
+        function loadOrders() {
+            if (!user) return;
+
+            axios.get(app.taskServerUrl + '/task/myPublished', {
+                params: { publisherId: user.userId, page: 1, pageSize: 20 }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data.list || [];
+                    renderOrders(list);
+                }
+            }).catch(function(err) {
+                console.error('加载订单失败:', err);
+            });
+        }
+
+        function renderOrders(list) {
+            if (!list || list.length === 0) {
+                document.getElementById('orderList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-title">暂无订单</div>
+                    </div>
+                `;
+                return;
+            }
+
+            var html = '';
+            list.forEach(function(task) {
+                var statusText = app.getStatusText(task.status);
+                var statusClass = app.getStatusClass(task.status);
+                html += `
+                    <div class="task-item" onclick="window.location.href='task-detail.html?id=${task.id}'">
+                        <div class="task-title">
+                            <span>${task.title}</span>
+                            <span>¥${parseFloat(task.rewardAmount).toFixed(2)}</span>
+                        </div>
+                        <div class="task-desc">${task.description || ''}</div>
+                        <div class="task-meta">
+                            <span class="badge ${statusClass}">${statusText}</span>
+                            <span>${task.runnerName ? '接单员: ' + task.runnerName : '等待接单'}</span>
+                            <span>${app.formatDate(new Date(task.createdTime).getTime())}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('orderList').innerHTML = html;
+        }
+
+        // ===== 加载评价 =====
+        function loadEvaluations() {
+            if (!user) return;
+
+            axios.get(app.taskServerUrl + '/task/evaluations', {
+                params: { runnerId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data || [];
+                    renderEvaluations(list);
+                }
+            }).catch(function(err) {
+                console.error('加载评价失败:', err);
+            });
+        }
+
+        function renderEvaluations(list) {
+            if (!list || list.length === 0) {
+                document.getElementById('evalList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⭐</div>
+                        <div class="empty-state-title">暂无评价</div>
+                    </div>
+                `;
+                return;
+            }
+
+            var html = '';
+            list.forEach(function(e) {
+                var stars = '⭐'.repeat(e.rating) + '☆'.repeat(5 - e.rating);
+                html += `
+                    <div class="evaluation-item">
+                        <div class="stars">${stars}</div>
+                        <div class="comment">${e.comment || '无文字评价'}</div>
+                        <div style="font-size:var(--font-size-sm); color:var(--text-muted);">
+                            ${e.publisherName || '用户'} · ${app.formatDate(new Date(e.createdTime).getTime())}
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('evalList').innerHTML = html;
+        }
+
+        // ===== 跑腿员状态 =====
+        function loadRunnerStatus() {
+            if (!user) return;
+
+            var displayEl = document.getElementById('runnerStatusDisplay');
+
+            axios.get(app.userServerUrl + '/passport/getRunnerStatus', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    if (data) {
+                        var statusMap = {
+                            1: '<span class="badge-success">✅ 已通过</span>',
+                            2: '<span class="badge-danger">❌ 已拒绝</span>',
+                            3: '<span class="badge-warning">⏳ 审核中</span>'
+                        };
+                        displayEl.innerHTML = statusMap[data.status] || '未知';
+                    } else {
+                        displayEl.innerHTML = '<span style="color:var(--text-muted);">未申请</span>';
+                    }
+                }
+            }).catch(function(err) {
+                console.error('加载跑腿员状态失败:', err);
+            });
+        }
+
+        // ===== 注销账号 =====
+        document.getElementById('deleteAccountBtn').addEventListener('click', function() {
+            if (confirm('确定要注销账号吗？此操作不可恢复！')) {
+                app.showToast('注销功能开发中');
+            }
+        });
+
+        // ===== 初始化 =====
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+
+</body>
+</html>

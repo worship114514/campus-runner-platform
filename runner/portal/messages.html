@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消息中心 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .messages-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .conversation-item:hover {
+            background: var(--bg-hover);
+        }
+        .conversation-item .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: var(--font-size-lg);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .conversation-item .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .conversation-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .conversation-item .info .name {
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-1);
+        }
+        .conversation-item .info .name .time {
+            font-weight: 400;
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .conversation-item .info .last-msg {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conversation-item .info .last-msg .recalled {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .unread-badge {
+            background: var(--primary-500);
+            color: white;
+            font-size: var(--font-size-xs);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            flex-shrink: 0;
+        }
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+            color: var(--text-muted);
+        }
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-4);
+        }
+        .empty-state .title {
+            font-size: var(--font-size-lg);
+            font-weight: 500;
+            margin-bottom: var(--space-2);
+        }
+        .delete-btn {
+            color: var(--error-500);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-md);
+            transition: background 0.2s;
+        }
+        .delete-btn:hover {
+            background: var(--bg-hover);
+        }
+        .conversation-item .actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="messages-page">
+        <div class="card">
+            <div class="card-header">
+                💬 消息
+                <span style="font-size:var(--font-size-sm); color:var(--text-muted); margin-left:auto;" id="unreadCount"></span>
+            </div>
+            <div class="card-body" id="conversationList">
+                <div class="empty-state">
+                    <div class="icon">💬</div>
+                    <div class="title">暂无消息</div>
+                    <div style="font-size:var(--font-size-sm); color:var(--text-muted);">
+                        当您有进行中的任务时，可以在这里与对方沟通
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var user = app.getCurrentUser();
+
+        // ===== 工具：解码用户名 =====
+        function decodeName(name) {
+            if (!name) return '';
+            try {
+                return decodeURIComponent(name);
+            } catch (e) {
+                return name;
+            }
+        }
+
+        function loadConversations() {
+            if (!user) {
+                document.getElementById('conversationList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔒</div>
+                        <div class="title">请先登录</div>
+                        <div style="font-size:var(--font-size-sm); color:var(--text-muted);">
+                            <a href="login.html" style="color:var(--primary-500);">去登录</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            axios.get(app.taskServerUrl + '/message/conversations', {
+                params: { userId: user.userId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var data = res.data.data;
+                    var list = data.list || [];
+                    var unreadCount = data.unreadCount || 0;
+                    renderConversations(list, unreadCount);
+                }
+            }).catch(function(err) {
+                console.error('加载会话失败:', err);
+            });
+        }
+
+        function renderConversations(list, unreadCount) {
+            var container = document.getElementById('conversationList');
+            var unreadEl = document.getElementById('unreadCount');
+
+            if (unreadCount > 0) {
+                unreadEl.textContent = '🔴 ' + unreadCount + '条未读';
+            } else {
+                unreadEl.textContent = '';
+            }
+
+            if (!list || list.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">💬</div>
+                        <div class="title">暂无消息</div>
+                        <div style="font-size:var(--font-size-sm); color:var(--text-muted);">
+                            当您有进行中的任务时，可以在这里与对方沟通
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            var html = '';
+            list.forEach(function(conv) {
+                // 确定对方信息
+                var isA = conv.userAId === user.userId;
+                var otherId = isA ? conv.userBId : conv.userAId;
+                var otherNameRaw = isA ? conv.userBName : conv.userAName;
+                var otherName = decodeName(otherNameRaw);
+                var otherFace = isA ? conv.userBFace : conv.userAFace;
+                var unread = isA ? conv.userAUnread : conv.userBUnread;
+                var isDeleted = isA ? conv.userADeleted === 1 : conv.userBDeleted === 1;
+
+                if (isDeleted) return;
+
+                var avatarHtml;
+                if (otherFace && otherFace !== 'null' && otherFace !== '') {
+                    avatarHtml = `<img src="${otherFace}" alt="头像">`;
+                } else {
+                    avatarHtml = otherName ? otherName.charAt(0).toUpperCase() : '?';
+                }
+
+                var lastMsg = conv.lastMessage || '暂无消息';
+                // 如果消息被撤回，显示特殊标记
+                if (lastMsg.startsWith('[已撤回]')) {
+                    lastMsg = '<span class="recalled">该消息已被撤回</span>';
+                }
+
+                var timeHtml = conv.lastTime ? app.formatDate(new Date(conv.lastTime).getTime()) : '';
+
+                html += `
+                    <div class="conversation-item" onclick="openChat('${conv.id}')">
+                        <div class="avatar">${avatarHtml}</div>
+                        <div class="info">
+                            <div class="name">
+                                <span>${otherName || '用户'}</span>
+                                <span class="time">${timeHtml}</span>
+                            </div>
+                            <div class="last-msg">${lastMsg}</div>
+                        </div>
+                        <div class="actions">
+                            ${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
+                            <span class="delete-btn" onclick="event.stopPropagation(); deleteConversation('${conv.id}')">🗑️</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html || `
+                <div class="empty-state">
+                    <div class="icon">💬</div>
+                    <div class="title">暂无消息</div>
+                </div>
+            `;
+        }
+
+        function openChat(conversationId) {
+            window.location.href = 'chat.html?conversationId=' + conversationId;
+        }
+
+        function deleteConversation(conversationId) {
+            if (!confirm('确定删除该会话吗？')) return;
+            axios.delete(app.taskServerUrl + '/message/conversation', {
+                params: {
+                    conversationId: conversationId,
+                    userId: user.userId
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已删除');
+                    loadConversations();
+                } else {
+                    app.showToast(res.data.msg || '删除失败');
+                }
+            }).catch(function(err) {
+                app.showToast('删除失败');
+            });
+        }
+
+        // ===== 轮询 =====
+        loadConversations();
+        setInterval(loadConversations, 5000);
+
+        if (!user) {
+            app.showToast('请先登录');
+        }
+    </script>
+
+</body>
+</html>

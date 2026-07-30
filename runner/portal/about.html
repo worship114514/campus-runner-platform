@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我们 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .about-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .about-page .card {
+            margin-bottom: var(--space-4);
+        }
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--space-4);
+        }
+        .value-item {
+            text-align: center;
+            padding: var(--space-4);
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            transition: all 0.2s;
+        }
+        .value-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .value-item .icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: var(--space-2);
+        }
+        .value-item h4 {
+            margin-bottom: var(--space-1);
+        }
+        .value-item p {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--space-4);
+            text-align: center;
+        }
+        .stats-grid .num {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--primary-500);
+        }
+        .stats-grid .label {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="about-page">
+        <div class="card">
+            <div class="card-header">🌱 关于校园闪电侠</div>
+            <div class="card-body">
+                <p style="margin-bottom: var(--space-4); line-height: 1.8;">
+                    校园闪电侠成立于2026年，致力于为高校师生提供便捷、安全、高效的校园跑腿服务。
+                    我们连接有需求的学生和有能力的跑腿员，让校园生活更加便利。
+                </p>
+                <p style="line-height: 1.8;">
+                    我们的使命是让每一位学生都能轻松解决校园生活中的琐事，
+                    让每一位跑腿员都能通过自己的努力获得合理回报。
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">⭐ 我们的价值观</div>
+            <div class="card-body">
+                <div class="values-grid">
+                    <div class="value-item">
+                        <span class="icon">🤝</span>
+                        <h4>信任</h4>
+                        <p>建立可靠的评价体系，让每一次服务都有保障</p>
+                    </div>
+                    <div class="value-item">
+                        <span class="icon">⚡</span>
+                        <h4>高效</h4>
+                        <p>快速匹配需求与服务，节省师生宝贵时间</p>
+                    </div>
+                    <div class="value-item">
+                        <span class="icon">🛡️</span>
+                        <h4>安全</h4>
+                        <p>实名认证与人脸验证，保障双方权益</p>
+                    </div>
+                    <div class="value-item">
+                        <span class="icon">👥</span>
+                        <h4>互助</h4>
+                        <p>构建校园互助社区，让温暖传递</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">📊 平台数据</div>
+            <div class="card-body">
+                <div class="stats-grid">
+                    <div><div class="num">5000+</div><div class="label">注册用户</div></div>
+                    <div><div class="num">1000+</div><div class="label">跑腿员</div></div>
+                    <div><div class="num">10000+</div><div class="label">已完成订单</div></div>
+                    <div><div class="num">99%</div><div class="label">满意度</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+</body>
+</html>

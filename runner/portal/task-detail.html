@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务详情 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .detail-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4);
+        }
+        .detail-page .card {
+            margin-bottom: var(--space-4);
+        }
+        .info-row {
+            display: flex;
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            width: 100px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .info-value {
+            flex: 1;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        .action-bar {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+            margin-top: var(--space-4);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-color);
+        }
+        .delivery-section {
+            background: var(--neutral-50);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-top: var(--space-3);
+            width: 100%;
+        }
+        .delivery-section .camera-preview {
+            width: 100%;
+            height: 180px;
+            background: var(--neutral-800);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-sm);
+            margin-bottom: var(--space-3);
+            overflow: hidden;
+        }
+        .delivery-section .camera-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .delivery-section .camera-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .delivery-section .btn-group {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+        .rating-stars {
+            display: flex;
+            gap: var(--space-1);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .rating-stars .star {
+            color: var(--neutral-300);
+            transition: color 0.2s;
+        }
+        .rating-stars .star.active {
+            color: #f59e0b;
+        }
+        .evaluation-item {
+            padding: var(--space-3);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .evaluation-item:last-child {
+            border-bottom: none;
+        }
+        .evaluation-item .stars {
+            color: #f59e0b;
+            font-size: var(--font-size-sm);
+        }
+        .evaluation-item .comment {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin-top: var(--space-1);
+        }
+        .role-hint {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            background: var(--bg-hover);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-3);
+        }
+        .map-container {
+            width: 100%;
+            height: 200px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--neutral-200);
+        }
+        .map-container .map-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        .chat-btn {
+            background: var(--info-500);
+            color: white;
+        }
+        .chat-btn:hover {
+            background: #2563eb;
+        }
+        @media (max-width: 640px) {
+            .info-row {
+                flex-direction: column;
+                gap: var(--space-1);
+            }
+            .info-label {
+                width: auto;
+            }
+            .map-container {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-container"></div>
+
+    <div class="detail-page" id="app">
+        <div class="card">
+            <div class="card-header">📦 任务详情</div>
+            <div class="card-body" id="taskInfo">
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏳</div>
+                    <div class="empty-state-title">加载中...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="evaluationCard" style="display:none;">
+            <div class="card-header">⭐ 评价</div>
+            <div class="card-body" id="evaluationArea"></div>
+        </div>
+    </div>
+
+    <div id="footer-container"></div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/common.js"></script>
+
+    <script>
+        var taskId = app.getUrlParam('id');
+        var user = null;
+        var task = null;
+        var mediaStream = null;
+        var capturedPhoto = null;
+        var mapQueue = [];
+
+        // ===== 页面初始化 =====
+        function initPage() {
+            user = app.getCurrentUser();
+            if (user) {
+                app.loadUserInfo().then(function() {
+                    loadTaskDetail();
+                });
+            } else {
+                loadTaskDetail();
+            }
+        }
+
+        // ===== 加载任务详情 =====
+        function loadTaskDetail() {
+            if (!taskId) {
+                document.getElementById('taskInfo').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <div class="empty-state-title">任务不存在</div>
+                    </div>
+                `;
+                return;
+            }
+
+            axios.get(app.taskServerUrl + '/task/detail', {
+                params: { taskId: taskId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    task = res.data.data;
+                    renderTask(task);
+                } else {
+                    document.getElementById('taskInfo').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">❌</div>
+                            <div class="empty-state-title">任务不存在或已删除</div>
+                        </div>
+                    `;
+                }
+            }).catch(function(err) {
+                document.getElementById('taskInfo').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <div class="empty-state-title">加载失败，请刷新重试</div>
+                    </div>
+                `;
+            });
+        }
+
+        // ===== 渲染任务 =====
+        function renderTask(task) {
+            var statusText = app.getStatusText(task.status);
+            var statusClass = app.getStatusClass(task.status);
+            var currentRole = app.currentRole;
+
+            var isPublisher = user && user.userId === task.publisherId;
+            var isRunner = user && user.userId === task.runnerId;
+            var canTake = currentRole === 2 && task.status === 1 && !isPublisher;
+            var canDeliver = currentRole === 2 && isRunner && task.status === 2;
+            var canComplete = currentRole === 1 && isPublisher && task.status === 3;
+            var canCancel = user && (isPublisher || isRunner) && (task.status === 1 || task.status === 2);
+            var canChat = user && (isPublisher || isRunner) && (task.status === 2 || task.status === 3 || task.status === 4);
+
+            var chatPartnerId = isPublisher ? task.runnerId : task.publisherId;
+            var chatPartnerName = isPublisher ? (task.runnerName ? decodeURIComponent(task.runnerName) : 'TA') : (task.publisherName ? decodeURIComponent(task.publisherName) : 'TA');
+
+            // 判断是否有经纬度
+            var hasPickupMap = task.pickupLng && task.pickupLat;
+            var hasDeliveryMap = task.deliveryLng && task.deliveryLat;
+
+            var html = `
+                <div class="role-hint">
+                    ${currentRole === 1 ? '👤 当前为普通用户模式' : currentRole === 2 ? '🏍️ 当前为跑腿员模式' : '👋 请登录查看'}
+                </div>
+                <div class="info-row">
+                    <div class="info-label">任务标题</div>
+                    <div class="info-value">${task.title}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">酬劳</div>
+                    <div class="info-value" style="color:var(--primary-500); font-weight:700;">¥${parseFloat(task.rewardAmount).toFixed(2)}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">状态</div>
+                    <div class="info-value"><span class="badge ${statusClass}">${statusText}</span></div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">发布者</div>
+                    <div class="info-value">${task.publisherName || '用户'}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">跑腿员</div>
+                    <div class="info-value">${task.runnerName ? decodeURIComponent(task.runnerName) : '暂无'}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">取件地址</div>
+                    <div class="info-value">${task.pickupLocation || '未设置'}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">送件地址</div>
+                    <div class="info-value">${task.deliveryLocation || '未设置'}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">发布时间</div>
+                    <div class="info-value">${app.formatDateTime(new Date(task.createdTime).getTime())}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">任务描述</div>
+                    <div class="info-value">${task.description || '无'}</div>
+                </div>
+                ${task.deliveryPhoto ? `
+                <div class="info-row">
+                    <div class="info-label">送达照片</div>
+                    <div class="info-value"><img src="${task.deliveryPhoto}" style="max-width:200px; border-radius:var(--radius-md);"></div>
+                </div>` : ''}
+            `;
+
+            // ===== 取件地图 =====
+            if (hasPickupMap) {
+                html += `
+                    <div class="info-row">
+                        <div class="info-label">取件位置</div>
+                        <div class="info-value">
+                            <div class="map-container" id="pickupMapContainer"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ===== 送件地图 =====
+            if (hasDeliveryMap) {
+                html += `
+                    <div class="info-row">
+                        <div class="info-label">送件位置</div>
+                        <div class="info-value">
+                            <div class="map-container" id="deliveryMapContainer"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 操作按钮
+            var actions = '';
+            var canTakeButReason = '';
+
+            if (canTake) {
+                actions += `<button class="btn btn-primary" id="acceptBtn">接单</button>`;
+            } else if (task.status === 1 && currentRole === 1 && user) {
+                canTakeButReason = '💡 切换为跑腿员模式才能接单';
+            } else if (task.status === 1 && !user) {
+                canTakeButReason = '💡 请登录后接单';
+            }
+
+            if (canDeliver) {
+                // 简化的标记送达：不需要拍照，直接标记
+                actions += `<button class="btn btn-primary" id="deliverBtn">📸 标记送达</button>`;
+            }
+
+            if (canComplete) {
+                actions += `<button class="btn btn-success" id="completeBtn">✅ 确认完成</button>`;
+            }
+
+            if (canCancel) {
+                actions += `<button class="btn btn-danger" id="cancelBtn">取消任务</button>`;
+            }
+
+            if (canChat && chatPartnerId) {
+                actions += `<button class="btn chat-btn" onclick="openChat()">💬 联系${chatPartnerName || 'TA'}</button>`;
+            }
+
+            if (!user) {
+                actions = `<a href="login.html"><button class="btn btn-primary">登录后可操作</button></a>`;
+            }
+
+            if (canTakeButReason && !actions) {
+                actions = `<span style="font-size:var(--font-size-sm); color:var(--text-muted);">${canTakeButReason}</span>`;
+            }
+
+            html += `
+                <div class="action-bar">${actions}</div>
+            `;
+
+            document.getElementById('taskInfo').innerHTML = html;
+
+            // ===== 初始化地图 =====
+            if (hasPickupMap) {
+                setTimeout(function() {
+                    initDetailMap('pickupMapContainer', task.pickupLng, task.pickupLat, '取件位置');
+                }, 300);
+            }
+            if (hasDeliveryMap) {
+                setTimeout(function() {
+                    initDetailMap('deliveryMapContainer', task.deliveryLng, task.deliveryLat, '送件位置');
+                }, 300);
+            }
+
+            // ===== 绑定事件 =====
+            document.getElementById('acceptBtn') && document.getElementById('acceptBtn').addEventListener('click', function() {
+                acceptTask();
+            });
+
+            document.getElementById('deliverBtn') && document.getElementById('deliverBtn').addEventListener('click', function() {
+                // 直接标记送达，不需要拍照
+                if (!confirm('确认已送达？')) return;
+
+                axios.post(app.taskServerUrl + '/task/deliver', null, {
+                    params: {
+                        taskId: taskId,
+                        deliveryPhoto: '' // 空字符串
+                    }
+                }).then(function(res) {
+                    if (res.data && res.data.status === 200) {
+                        app.showToast('已标记送达，等待用户确认');
+                        loadTaskDetail();
+                    } else {
+                        app.showToast(res.data.msg || '操作失败');
+                    }
+                }).catch(function(err) {
+                    app.showToast(err.data ? err.data.msg : '操作失败');
+                });
+            });
+
+            document.getElementById('cameraBtn') && document.getElementById('cameraBtn').addEventListener('click', function() {
+                openCamera();
+            });
+
+            document.getElementById('captureBtn') && document.getElementById('captureBtn').addEventListener('click', function() {
+                capturePhoto();
+            });
+
+            document.getElementById('confirmDeliverBtn') && document.getElementById('confirmDeliverBtn').addEventListener('click', function() {
+                confirmDeliver();
+            });
+
+            document.getElementById('completeBtn') && document.getElementById('completeBtn').addEventListener('click', function() {
+                completeTask();
+            });
+
+            document.getElementById('cancelBtn') && document.getElementById('cancelBtn').addEventListener('click', function() {
+                cancelTask();
+            });
+
+            // 加载评价
+            loadEvaluations(task);
+        }
+
+        // ===== 地图初始化 =====
+        function initDetailMap(containerId, lng, lat, title) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+
+            if (typeof AMap === 'undefined') {
+                container.innerHTML = '<div class="map-placeholder"><span>🗺️</span><span>地图加载中...</span></div>';
+                mapQueue.push({ containerId: containerId, lng: lng, lat: lat, title: title });
+                return;
+            }
+
+            var map = new AMap.Map(containerId, {
+                zoom: 16,
+                center: [parseFloat(lng), parseFloat(lat)],
+                resizeEnable: true
+            });
+
+            var marker = new AMap.Marker({
+                position: [parseFloat(lng), parseFloat(lat)],
+                map: map,
+                title: title
+            });
+
+            var info = new AMap.InfoWindow({
+                content: '<div style="padding:8px 12px;font-size:14px;"><strong>' + title + '</strong><br>经度: ' + lng + '<br>纬度: ' + lat + '</div>',
+                offset: new AMap.Pixel(0, -30)
+            });
+            info.open(map, marker.getPosition());
+        }
+
+        window.initDetailMapCallback = function() {
+            mapQueue.forEach(function(item) {
+                initDetailMap(item.containerId, item.lng, item.lat, item.title);
+            });
+            mapQueue = [];
+        };
+
+        // ===== 打开聊天 =====
+        function openChat() {
+            window.location.href = 'messages.html?taskId=' + task.id;
+        }
+
+        // ===== 接单 =====
+        function acceptTask() {
+            if (!user) {
+                app.showToast('请先登录');
+                return;
+            }
+            if (app.currentRole !== 2) {
+                app.showToast('只有跑腿员才能接单');
+                return;
+            }
+
+            var runnerName = app.getCookie('userName') || '跑腿员';
+
+            axios.post(app.taskServerUrl + '/task/accept', null, {
+                params: {
+                    taskId: taskId,
+                    runnerId: user.userId,
+                    runnerName: runnerName,
+                    runnerAvatar: ''
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('接单成功！');
+                    loadTaskDetail();
+                } else {
+                    app.showToast(res.data.msg || '接单失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '接单失败');
+            });
+        }
+
+        // ===== 摄像头 =====
+        function openCamera() {
+            var preview = document.getElementById('cameraPreview');
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(function(stream) {
+                    mediaStream = stream;
+                    var video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.autoplay = true;
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.objectFit = 'cover';
+                    preview.innerHTML = '';
+                    preview.appendChild(video);
+                    document.getElementById('captureBtn').disabled = false;
+                    app.showToast('摄像头已开启，请拍照');
+                })
+                .catch(function(err) {
+                    app.showToast('无法访问摄像头，请检查权限');
+                });
+        }
+
+        function capturePhoto() {
+            var preview = document.getElementById('cameraPreview');
+            var video = preview.querySelector('video');
+            if (!video) return;
+
+            var canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            capturedPhoto = canvas.toDataURL('image/jpeg');
+
+            var img = document.createElement('img');
+            img.src = capturedPhoto;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            preview.innerHTML = '';
+            preview.appendChild(img);
+
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(function(track) { track.stop(); });
+                mediaStream = null;
+            }
+
+            document.getElementById('captureBtn').disabled = true;
+            document.getElementById('confirmDeliverBtn').disabled = false;
+            app.showToast('照片已拍摄，请确认送达');
+        }
+
+        function confirmDeliver() {
+            if (!capturedPhoto) {
+                app.showToast('请先拍照');
+                return;
+            }
+
+            axios.post(app.taskServerUrl + '/task/deliver', null, {
+                params: {
+                    taskId: taskId,
+                    deliveryPhoto: capturedPhoto
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('已标记送达，等待用户确认');
+                    loadTaskDetail();
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '操作失败');
+            });
+        }
+
+        // ===== 确认完成 =====
+        function completeTask() {
+            if (!user || app.currentRole !== 1) {
+                app.showToast('只有普通用户才能确认完成');
+                return;
+            }
+            if (!confirm('确认任务已完成？')) return;
+
+            axios.post(app.taskServerUrl + '/task/complete', null, {
+                params: {
+                    taskId: taskId,
+                    publisherId: user.userId
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('任务已完成！酬劳已发放');
+                    loadTaskDetail();
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '操作失败');
+            });
+        }
+
+        // ===== 取消任务 =====
+        function cancelTask() {
+            if (!user) {
+                app.showToast('请先登录');
+                return;
+            }
+            if (!confirm('确定取消该任务吗？')) return;
+
+            axios.post(app.taskServerUrl + '/task/cancel', null, {
+                params: {
+                    taskId: taskId,
+                    userId: user.userId
+                }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    app.showToast('任务已取消');
+                    loadTaskDetail();
+                } else {
+                    app.showToast(res.data.msg || '操作失败');
+                }
+            }).catch(function(err) {
+                app.showToast(err.data ? err.data.msg : '操作失败');
+            });
+        }
+
+        // ===== 加载评价 =====
+        function loadEvaluations(task) {
+            if (!task || task.status !== 4) {
+                document.getElementById('evaluationCard').style.display = 'none';
+                return;
+            }
+
+            var canEvaluate = user && user.userId === task.publisherId && task.status === 4;
+
+            axios.get(app.taskServerUrl + '/task/evaluations', {
+                params: { runnerId: task.runnerId }
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    var list = res.data.data || [];
+                    var html = '';
+
+                    if (canEvaluate) {
+                        var alreadyEvaluated = list.some(function(e) {
+                            return e.publisherId === user.userId && e.taskId === taskId;
+                        });
+                        if (!alreadyEvaluated) {
+                            html += `
+                                <div style="margin-bottom:var(--space-4);">
+                                    <div style="font-weight:500; margin-bottom:var(--space-2);">评价跑腿员 ${task.runnerName || ''}</div>
+                                    <div class="rating-stars" id="ratingStars">
+                                        <span class="star" data-rating="1">⭐</span>
+                                        <span class="star" data-rating="2">⭐</span>
+                                        <span class="star" data-rating="3">⭐</span>
+                                        <span class="star" data-rating="4">⭐</span>
+                                        <span class="star" data-rating="5">⭐</span>
+                                    </div>
+                                    <textarea id="evalComment" class="form-textarea" style="margin-top:var(--space-2);" placeholder="说说你的体验..." rows="2"></textarea>
+                                    <button class="btn btn-primary btn-sm" id="submitEvalBtn" style="margin-top:var(--space-2);">提交评价</button>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    if (list.length > 0) {
+                        html += `<div style="font-weight:500; margin-bottom:var(--space-2);">已有 ${list.length} 条评价</div>`;
+                        list.forEach(function(e) {
+                            var stars = '⭐'.repeat(e.rating) + '☆'.repeat(5 - e.rating);
+                            html += `
+                                <div class="evaluation-item">
+                                    <div class="stars">${stars}</div>
+                                    <div class="comment">${e.comment || '无文字评价'}</div>
+                                    <div style="font-size:var(--font-size-sm); color:var(--text-muted);">
+                                        ${e.publisherName || '用户'} · ${app.formatDate(new Date(e.createdTime).getTime())}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    document.getElementById('evaluationArea').innerHTML = html;
+                    document.getElementById('evaluationCard').style.display = 'block';
+
+                    var selectedRating = 0;
+                    document.querySelectorAll('#ratingStars .star').forEach(function(star) {
+                        star.addEventListener('click', function() {
+                            selectedRating = parseInt(this.dataset.rating);
+                            document.querySelectorAll('#ratingStars .star').forEach(function(s) {
+                                s.classList.toggle('active', parseInt(s.dataset.rating) <= selectedRating);
+                            });
+                        });
+                    });
+
+                    document.getElementById('submitEvalBtn') && document.getElementById('submitEvalBtn').addEventListener('click', function() {
+                        if (selectedRating === 0) {
+                            app.showToast('请选择评分');
+                            return;
+                        }
+                        var comment = document.getElementById('evalComment').value.trim();
+
+                        axios.post(app.taskServerUrl + '/task/evaluate', null, {
+                            params: {
+                                taskId: taskId,
+                                publisherId: user.userId,
+                                publisherName: app.getCookie('userName') || '用户',
+                                runnerId: task.runnerId,
+                                runnerName: task.runnerName || '',
+                                rating: selectedRating,
+                                comment: comment
+                            }
+                        }).then(function(res) {
+                            if (res.data && res.data.status === 200) {
+                                app.showToast('评价提交成功！');
+                                loadEvaluations(task);
+                            } else {
+                                app.showToast(res.data.msg || '提交失败');
+                            }
+                        }).catch(function(err) {
+                            app.showToast(err.data ? err.data.msg : '提交失败');
+                        });
+                    });
+                }
+            }).catch(function(err) {
+                console.error('加载评价失败:', err);
+            });
+        }
+
+        // ===== 加载高德地图 =====
+        function loadAMap() {
+            var script = document.createElement('script');
+            script.src = 'https://webapi.amap.com/maps?v=2.0&key=8bdb8e93710c56a614e382cd16116c65&callback=initDetailMapCallback';
+            document.head.appendChild(script);
+        }
+
+        // ===== 页面初始化 =====
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAMap();
+            user = app.getCurrentUser();
+            if (user) {
+                app.loadUserInfo().then(function() {
+                    loadTaskDetail();
+                });
+            } else {
+                loadTaskDetail();
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 · 校园闪电侠</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/theme.css">
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: var(--space-4);
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: var(--radius-2xl);
+            padding: var(--space-8) var(--space-6);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+        .login-card .logo {
+            text-align: center;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-500);
+            margin-bottom: var(--space-2);
+        }
+        .login-card .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+            margin-bottom: var(--space-6);
+        }
+        .login-card .switch-link {
+            text-align: center;
+            margin-top: var(--space-4);
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        .login-card .switch-link a {
+            color: var(--primary-500);
+            font-weight: 500;
+        }
+        .login-card .switch-link a:hover {
+            text-decoration: underline;
+        }
+        .error-msg {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+            font-size: var(--font-size-sm);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-card">
+            <div class="logo">🏃 校园闪电侠</div>
+            <div class="subtitle">登录继续你的校园跑腿之旅</div>
+
+            <div id="errorMsg" class="error-msg"></div>
+
+            <div class="form-group">
+                <label class="form-label">手机号</label>
+                <input type="tel" id="mobile" class="form-input" placeholder="请输入手机号" maxlength="11">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">密码</label>
+                <input type="password" id="password" class="form-input" placeholder="请输入密码">
+            </div>
+
+            <button class="btn btn-primary btn-block" id="loginBtn">登录</button>
+
+            <div class="switch-link">
+                还没有账号？<a href="register.html">立即注册</a>
+            </div>
+            <div class="switch-link" style="margin-top:var(--space-2);">
+                <a href="help.html">遇到问题？帮助中心</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../libs/axios.min.js"></script>
+    <script src="../js/app.js"></script>
+
+    <script>
+        function showError(msg) {
+            var el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(function() {
+                el.style.display = 'none';
+            }, 3000);
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            var mobile = document.getElementById('mobile').value.trim();
+            var password = document.getElementById('password').value.trim();
+
+            if (!mobile) {
+                showError('请输入手机号');
+                return;
+            }
+            if (!/^1[3-9]\d{9}$/.test(mobile)) {
+                showError('请输入正确的手机号');
+                return;
+            }
+            if (!password || password.length < 6) {
+                showError('密码长度至少6位');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '登录中...';
+
+            axios.post(app.userServerUrl + '/passport/doLoginByPwd', {
+                mobile: mobile,
+                password: password
+            }).then(function(res) {
+                if (res.data && res.data.status === 200) {
+                    console.log('登录返回数据:', res.data);
+
+                    var data = res.data.data;
+                    var user = data.user || data;
+                    var token = data.token || user.token || user.id;
+
+                    console.log('提取的用户:', user);
+                    console.log('提取的Token:', token);
+
+                    // 保存到Cookie
+                    app.setCookie('uid', user.id, 30);
+                    app.setCookie('utoken', token, 30);
+                    app.setCookie('userName', user.nickname || user.username || '用户', 30);
+                    app.setCookie('userRole', user.userRole || 1, 30);
+                    app.setCookie('userAvatar', user.face || '', 30);
+
+                    // 保存到全局
+                    app.userInfo = user;
+                    app.currentRole = user.userRole || 1;
+                    app.saveUserInfoToStorage(user);
+
+                    console.log('Cookie设置完成, uid=' + app.getCookie('uid') + ', utoken=' + app.getCookie('utoken'));
+
+                    app.showToast('登录成功');
+
+                    // 根据角色跳转
+                    setTimeout(function() {
+                        if (user.userRole === 2) {
+                            window.location.href = '../runner/index.html';
+                        } else if (user.userRole === 3) {
+                            window.location.href = app.adminIndexUrl;
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    }, 500);
+                } else {
+                    showError(res.data.msg || '登录失败');
+                }
+            }).catch(function(err) {
+                if (err.response && err.response.data) {
+                    var data = err.response.data;
+                    if (data.status === 518) {
+                        showError('您的跑腿员账号审核中，请等待管理员审核通过后再登录');
+                    } else {
+                        showError(data.msg || '登录失败，请重试');
+                    }
+                } else {
+                    showError('登录失败，请重试');
+                }
+            }).finally(function() {
+                document.getElementById('loginBtn').disabled = false;
+                document.getElementById('loginBtn').textContent = '登录';
+            });
+        });
+
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginBtn').click();
+            }
+        });
+    </script>
+
+</body>
+</html>
